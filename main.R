@@ -6,6 +6,17 @@ library(tidyverse)
 library(gg3D)
 library(gganimate)
 
+
+bra_events <- tribble(
+  ~from, ~to, ~description,
+  2003,2012, "one of the fastest-growing major economies in the world",
+  2012,2012, "Forest conservation code",
+  2014, 2014, "Brazilian economic crisis",
+  2015, 2016, "Warmest EI Nino-induced severe drought",
+  2018, 2024, "increased deforestation alerts",
+  2020, 2021, "COVID-19"
+)
+
 data <- 
   list.files("data", full.names = TRUE) |>
   map(read_csv) |>
@@ -30,13 +41,33 @@ animate(plt, renderer = ffmpeg_renderer())
 anim_save("gg3d-gganimate.webm")
 
 #
-# viz derivative
+# viz derivative: Change in CCA values over time
 #
 
 data |>
   arrange(`Country Code`, year) |>
-  mutate(derivative = abs(CCX1 - lag(CCX1)) + abs(CCX2 - lag(CCX2))) |>
-  ggplot(aes(year, derivative, color = `Country Code`)) +
+  mutate(derivative = abs(CCZ1 - lag(CCZ1))) |>
+  ggplot(aes(year, derivative)) +
     geom_line() +
     labs(x = "Time", y = "Change in CCA")+
-    theme_minimal()
+    theme_minimal() +
+    facet_wrap(~ `Country Code`)
+
+#
+# just 2D
+#
+
+data |>
+  pivot_longer(starts_with("CC")) |>
+  mutate(
+    index_type = name |> str_extract("[XYZ]"),
+    cca_axis = name |> str_extract("[0-9]") |> map_chr(~ str_glue("CCA{.x}"))
+  ) |>
+  select(-name) |>
+  pivot_wider(names_from = cca_axis, values_from = value) |>
+  ggplot(aes(year, CCA1, color = index_type)) +
+  geom_line() +
+  theme_minimal() +
+  facet_wrap(~ `Country Code`)
+
+
