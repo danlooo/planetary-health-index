@@ -36,63 +36,61 @@ data <-
   mutate(during_event = ! is.na(event)) |>
   arrange(country, year)
 
-current_year <- 2021
-current_country <- "BRA"
-
-data1 <-
-  data |>
-  pivot_wider(names_from = index_type, values_from = value) |>
-  filter(cca_axis == "CCA1")
-
-plt1 <-
-  data1 |>
-  mutate(
-    point_group = case_when(
-      year == current_year & country == current_country  ~ "current_point",
-      country == current_country ~ "normal",
-      year == current_year ~ "current_year",
-      TRUE ~ "normal"
-    ) |> factor(levels = c("normal", "current_country", "current_year", "current_point")), # plotting order
-    path_group = case_when(
-      country == current_country ~ "current_country",
-      TRUE ~ NA
-      ),
-    country_label = ifelse(year == current_year, country, NA),
-    point_size = ifelse(point_group == "current_point", 2.5, 1)
-  ) |>
-  arrange(point_group, year, country) |>
-  ggplot(aes(x = Biosphere, y = Atmosphere, z = Socioeconomics)) +
-  axes_3D() +
-  stat_2D(geom = "point", mapping = aes(color = point_group, size = point_size), size = 2.5) +
-  stat_3D(geom = "path", mapping = aes(color = path_group)) +
-  stat_3D(geom = "text", mapping = aes(label = country_label, color = point_group), hjust = 1.2) +
-  labs_3D(label = c("Bio"," Atmo", "Soc")) +
-  guides(color = "none") +
-  scale_color_manual(values = c("normal" = "grey", "current_point" = "darkred", "current_country" = "darkred", "current_year" = "darkblue"), na.value = "#00000000") +
-  theme_void()
+plot_frame <- function(current_year = 2021, current_country = "BRA") {
+  data1 <-
+    data |>
+    pivot_wider(names_from = index_type, values_from = value) |>
+    filter(cca_axis == "CCA1")
   
-plt2 <-
-  data |>
-  pivot_wider(names_from = cca_axis, values_from = value) |>
-  mutate(
-    point_group = case_when(
-      year == current_year & country == current_country  ~ "current_point",
-      country == current_country ~ "normal",
-      year == current_year ~ "current_year",
-      TRUE ~ "normal"
-    ) |> factor(levels = c("normal", "current_country", "current_year", "current_point")), # plotting order
-    path_group = case_when(
-      country == current_country ~ "current_country",
-      TRUE ~ NA
-    ),
-    country_label = ifelse(year == current_year, country, NA),
-    point_size = ifelse(point_group == "current_point", 2.5, 1)
-  ) |>
-  arrange(point_group, year, country) |> # plot order
-  ggplot(aes(CCA1, CCA2)) +
+  plt1 <-
+    data1 |>
+    mutate(
+      point_group = case_when(
+        year == current_year & country == current_country  ~ "current_point",
+        country == current_country ~ "normal",
+        year == current_year ~ "current_year",
+        TRUE ~ "normal"
+      ) |> factor(levels = c("normal", "current_country", "current_year", "current_point")), # plotting order
+      path_group = case_when(
+        country == current_country & year <= current_year ~ "current_country",
+        TRUE ~ NA
+      ),
+      country_label = ifelse(year == current_year, country, NA),
+      point_size = ifelse(point_group == "current_point", 2.5, 1)
+    ) |>
+    arrange(point_group, year, country) |>
+    ggplot(aes(x = Biosphere, y = Atmosphere, z = Socioeconomics)) +
+    axes_3D() +
+    stat_3D(geom = "point", mapping = aes(color = point_group, size = point_size), size = 2.5) +
+    stat_3D(geom = "path", mapping = aes(color = path_group)) +
+    stat_3D(geom = "text", mapping = aes(label = country_label, color = point_group), hjust = 1.2) +
+    labs_3D(label = c("Bio"," Atmo", "Soc")) +
+    guides(color = "none") +
+    scale_color_manual(values = c("normal" = "grey", "current_point" = "darkred", "current_country" = "darkred", "current_year" = "darkblue"), na.value = "#00000000") +
+    theme_void()
+  
+  plt2 <-
+    data |>
+    pivot_wider(names_from = cca_axis, values_from = value) |>
+    mutate(
+      point_group = case_when(
+        year == current_year & country == current_country  ~ "current_point",
+        country == current_country ~ "normal",
+        year == current_year ~ "current_year",
+        TRUE ~ "normal"
+      ) |> factor(levels = c("normal", "current_country", "current_year", "current_point")), # plotting order
+      path_group = case_when(
+        country == current_country & year <= current_year ~ "current_country",
+        TRUE ~ NA
+      ),
+      country_label = ifelse(year == current_year, country, NA),
+      point_size = ifelse(point_group == "current_point", 2.5, 1)
+    ) |>
+    arrange(point_group, year, country) |> # plot order
+    ggplot(aes(CCA1, CCA2)) +
     geom_point(color = "grey", size = 2) +
     geom_point(mapping = aes(color = point_group), size = 1.5) +
-    geom_path(mapping = aes(color = path_group), arrow = arrow(length = unit(3, "mm"))) +
+    geom_path(mapping = aes(color = path_group)) +
     geom_text(mapping = aes(label = country_label, color = point_group), hjust = 1.2)+
     scale_color_manual(values = c("normal" = "grey", "current_point" = "darkred", "current_country" = "darkred", "current_year" = "darkblue"), na.value = "#00000000") +
     theme_classic() +
@@ -105,10 +103,17 @@ plt2 <-
       title = str_glue("Brazil {current_year}"),
       subtitle = data2 |> filter(year == current_year) |> pull(event) |> unique() |> paste(collapse = "\n")
     )
+  
+  
+  plt <- (plt2 | plt1) + plot_layout(guides = "collect", widths = c(3,1))
+  plt
+}
 
+plot_frame(2010, "BRA")
 
-plt <- (plt2 | plt1) + plot_layout(guides = "collect", widths = c(3,1))
-plt
-
-
-
+expand_grid(country = "BRA", year = seq(2003, 2021)) |>
+  mutate(plt = map2(year, country, function(year, country) {
+    plt <- plot_frame(year, country)
+    dir.create("out")
+    ggsave(str_glue("out/{country}-{year}.png"), width = 11)
+  }))
