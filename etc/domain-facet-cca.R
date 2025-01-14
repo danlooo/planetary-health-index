@@ -13,7 +13,7 @@ events <- tribble(
   2003, 2012, "Emerging economic growth",
   2012, 2012, "Forest conservation code",
   2014, 2014, "Brazilian economic crisis",
-  2015, 2016, " Warmest EI Nino & drought",
+  2015, 2016, "Warmest EI Nino & drought",
   2018, 2024, "increased deforestation alerts",
   2020, 2021, "COVID-19"
 ) |>
@@ -36,16 +36,15 @@ data <-
   left_join(events) |>
   mutate(during_event = !is.na(event)) |>
   arrange(country, year) |>
-  pivot_wider(names_from = index_type, values_from = value) |>
-  filter(cca_axis == "CCA1") |>
+  pivot_wider(names_from = cca_axis, values_from = value) |>
   filter(country == "BRA") |>
-  distinct(year, .keep_all = TRUE) |>
   arrange(country, year)
 
-pca <-
-  data |>
-  select(Biosphere, Atmosphere, Socioeconomics) |>
-  prcomp(scale. = TRUE)
+
+data |>
+  ggplot(aes(CCA1, CCA2, color = year)) +
+  geom_point() +
+  facet_wrap(~index_type)
 
 
 plot_frame <- function(current_year = 2012) {
