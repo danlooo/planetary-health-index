@@ -6,7 +6,7 @@ library(ggnewscale)
 library(ggsci)
 
 theme_set(
-  theme_classic(base_size = 14) + theme(legend.position="bottom")
+  theme_classic(base_size = 14) + theme(legend.position = "bottom")
 )
 
 data <-
@@ -20,8 +20,6 @@ data <-
   ) |>
   select(-name) |>
   rename(country = `Country Code`) |>
-  left_join(events) |>
-  mutate(during_event = !is.na(event)) |>
   arrange(country, year)
 
 ui <- page_navbar(
@@ -41,20 +39,20 @@ ui <- page_navbar(
   nav_panel(
     title = "Overview",
     div("The Planetary Health Index uses three-way Canonical Correlation Analysis (CCA) to explain the variance of one domain using the other domains."),
-    
-    navset_card_tab( 
-      nav_panel("Domains", plotlyOutput("plt_3d_domains") ), 
-      nav_panel("CCA axes",
-                selectInput("domain", "Domain", c("Atmosphere", "Biosphere", "Socioeconomics"), selected = c("Atmosphere")),
-                plotlyOutput("plt_3d_axes")
-          )
+    navset_card_tab(
+      nav_panel("Domains", plotlyOutput("plt_3d_domains")),
+      nav_panel(
+        "CCA axes",
+        selectInput("domain", "Domain", c("Atmosphere", "Biosphere", "Socioeconomics"), selected = c("Atmosphere")),
+        plotlyOutput("plt_3d_axes")
+      )
     )
   ),
   nav_panel(
     title = "Details",
-      plotOutput("plt_cca"),
-      plotOutput("plt_time_country"),
-      plotOutput("plt_time_domain")
+    plotOutput("plt_cca"),
+    plotOutput("plt_time_country"),
+    plotOutput("plt_time_domain")
   )
 )
 
@@ -65,47 +63,45 @@ server <- server <- function(input, output, session) {
     data |>
       filter(
         country %in% input$countries &
-        min(input$years) <= year &
-        year <= max(input$years)
+          min(input$years) <= year &
+          year <= max(input$years)
       ) |>
       arrange(cca_axis, country, year, domain)
   })
-  
+
   output$plt_3d_domains <- renderPlotly({
     data <-
       current_data() |>
-        filter(cca_axis == "CCA1") |>
-        pivot_wider(names_from = domain, values_from = value)
-    
+      filter(cca_axis == "CCA1") |>
+      pivot_wider(names_from = domain, values_from = value)
+
     plot_ly(
       data = data,
-      x = ~ Atmosphere,
-      y = ~ Biosphere,
-      z = ~ Socioeconomics,
-      color = ~ country,
+      x = ~Atmosphere,
+      y = ~Biosphere,
+      z = ~Socioeconomics,
+      color = ~country,
       colors = pal_npg()(length(input$countries)),
       text = ~ str_glue("year: {year}\ncountry: {country}"),
-      
       type = "scatter3d",
       mode = "lines"
     )
   })
-  
+
   output$plt_3d_axes <- renderPlotly({
     data <-
       current_data() |>
       filter(domain == input$domain) |>
       pivot_wider(names_from = cca_axis, values_from = value)
-    
+
     plot_ly(
       data = data,
-      x = ~ CCA1,
-      y = ~ CCA2,
-      z = ~ CCA3,
-      color = ~ country,
+      x = ~CCA1,
+      y = ~CCA2,
+      z = ~CCA3,
+      color = ~country,
       colors = pal_npg()(length(input$countries)),
       text = ~ str_glue("year: {year}\ncountry: {country}"),
-      
       type = "scatter3d",
       mode = "lines"
     )
@@ -127,9 +123,9 @@ server <- server <- function(input, output, session) {
       ggplot(aes(year, value, color = domain)) +
       geom_line() +
       facet_wrap(~country, dir = "v", strip.position = "right", ncol = 1) +
-      scale_x_continuous(expand = c(0,0.2))+
+      scale_x_continuous(expand = c(0, 0.2)) +
       scale_color_manual(values = c(Atmosphere = "darkblue", Biosphere = "darkgreen", Socioeconomics = "darkorange")) +
-      labs(y = "CCA1") 
+      labs(y = "CCA1")
   })
 
   output$plt_time_domain <- renderPlot({
@@ -138,7 +134,7 @@ server <- server <- function(input, output, session) {
       ggplot(aes(year, value, color = country)) +
       geom_line() +
       facet_wrap(~domain, dir = "v", strip.position = "right") +
-      scale_x_continuous(expand = c(0,0.2))+
+      scale_x_continuous(expand = c(0, 0.2)) +
       labs(y = "CCA1") +
       scale_color_npg()
   })

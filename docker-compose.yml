@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    image: danlooo/planet_health_index
+    ports:
+      - "80:80"
+    environment:
+      - DATA_PASSWORD=${DATA_PASSWORD}
