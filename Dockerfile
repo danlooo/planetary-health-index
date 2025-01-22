@@ -19,6 +19,6 @@ WORKDIR /srv/shiny-server
 COPY app.R ./
 COPY data.gpg ./data.gpg
 EXPOSE 80
-CMD mkdir data && \
+CMD rm -rf data && mkdir data && \
     gpgtar --decrypt --directory . --gpg-args "--passphrase=${DATA_PASSWORD} --batch" data.gpg && \
     R -e "shiny::runApp('/srv/shiny-server', host='0.0.0.0', port=80)"
