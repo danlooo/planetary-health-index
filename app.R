@@ -34,7 +34,7 @@ ui <- page_navbar(
   ),
   sidebar = sidebar(
     selectInput("countries", "Countries", data$country |> unique(), multiple = TRUE, selected = c("BRA", "CHN")),
-    sliderInput("years", "Years", min = 2000, max = 2024, value = c(2000, 2024))
+    sliderInput("years", "Years", min = 2000, max = 2024, value = c(2000, 2024), sep = "")
   ),
   nav_panel(
     title = "Overview",
@@ -61,7 +61,7 @@ server <- function(input, output, session) {
     "This app shows preliminary results ",
     "for demonstration purposes only."
   ) |>
-    showNotification(duration = 60, type = "warning")
+    showNotification(duration = Inf, type = "warning")
   updateSelectInput(session, "countries", selected = data |> pull(country) |> unique() |> head(2))
 
   current_data <- reactive({
