@@ -56,7 +56,12 @@ ui <- page_navbar(
   )
 )
 
-server <- server <- function(input, output, session) {
+server <- function(input, output, session) {
+  paste0(
+    "This app shows preliminary results ",
+    "for demonstration purposes only."
+  ) |>
+    showNotification(duration = 60, type = "warning")
   updateSelectInput(session, "countries", selected = data |> pull(country) |> unique() |> head(2))
 
   current_data <- reactive({
