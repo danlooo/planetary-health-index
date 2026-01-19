@@ -42,6 +42,8 @@ ui <- page_navbar(
       "to model a set of related features holistically, whereas traditional Pearson Correlation focuses on the relationship ",
       "between two individual features. Data was collected from Eurostat, ERA5, and FluxCom."
     )),
+    h3("Features"),
+    tableOutput("features_table")
   ),
   nav_panel(
     title = "Scores",
@@ -84,6 +86,8 @@ server <- function(input, output, session) {
   highlighted_data <- reactive(
     ~ filter(.x, str_detect(name, input$highlight_str))
   )
+  
+  output$features_table <- renderTable(features |> select(sphere, var_id, label))
 
   output$scores_plt <- renderPlot(
     bg = "transparent",
