@@ -30,7 +30,7 @@ ui <- page_navbar(
   ),
   sidebar = sidebar(
     radioButtons("x_sphere", "Source sphere", choices = spheres, selected = "bio"),
-    radioButtons("y_sphere", "Target sphere", choices = spheres, selected = "soc"),
+    radioButtons("y_sphere", "Target sphere", choices = spheres, selected = "socio"),
     textInput("highlight_str", "Highlight NUTS region or year", value = "BE"),
     selectInput("used_features", "Use features", features$label, selected = features$label, multiple = TRUE)
   ),
@@ -80,43 +80,45 @@ server <- function(input, output, session) {
   ccas <- reactive({
     calculate_ccas(input$used_features)
   })
-  
+
   highlighted_data <- reactive(
     ~ filter(.x, str_detect(name, input$highlight_str))
   )
-  
+
   output$scores_plt <- renderPlot(
-    bg="transparent", {
-    ccas() |>
-      filter((X == input$x_sphere & Y == input$y_sphere) | (X == input$y_sphere & Y == input$x_sphere)) |>
-      select(X, Y, scores) |>
-      unnest(scores) |>
-      unite(comp, X, Y) |>
-      select(comp, CCA1, geo, time) |>
-      pivot_wider(names_from = comp, values_from = CCA1) |>
-      left_join(nuts3_regions, by = c("geo" = "geo3")) |>
-      unite("name", geo, time, sep = "-") |>
-      ggplot(aes_string(paste(input$x_sphere, input$y_sphere, sep = "_"), paste(input$y_sphere, input$x_sphere, sep = "_"))) +
-      geom_abline(color = "darkgrey") +
-      geom_point(color = "darkgrey", alpha = 0.03) +
-      geom_point(
-        data = highlighted_data(),
-        color = primary_color,
-        alpha = 0.3,
-        size = 1
-      ) +
-      geom_density_2d(
-        data = highlighted_data(),
-        color = primary_color
-      ) +
-      geom_density_2d(color = "#333333") +
-      coord_fixed() +
-      guides(fill = "none")
-  })
-  
+    bg = "transparent",
+    {
+      ccas() |>
+        filter((X == input$x_sphere & Y == input$y_sphere) | (X == input$y_sphere & Y == input$x_sphere)) |>
+        select(X, Y, scores) |>
+        unnest(scores) |>
+        unite(comp, X, Y) |>
+        select(comp, CCA1, geo, time) |>
+        pivot_wider(names_from = comp, values_from = CCA1) |>
+        left_join(nuts3_regions, by = c("geo" = "geo3")) |>
+        unite("name", geo, time, sep = "-") |>
+        ggplot(aes_string(paste(input$x_sphere, input$y_sphere, sep = "_"), paste(input$y_sphere, input$x_sphere, sep = "_"))) +
+        geom_abline(color = "darkgrey") +
+        geom_point(color = "darkgrey", alpha = 0.03) +
+        geom_point(
+          data = highlighted_data(),
+          color = primary_color,
+          alpha = 0.3,
+          size = 1
+        ) +
+        geom_density_2d(
+          data = highlighted_data(),
+          color = primary_color
+        ) +
+        geom_density_2d(color = "#333333") +
+        coord_fixed() +
+        guides(fill = "none")
+    }
+  )
+
   output$loadings_plt <- renderPlot({
     ccas() |>
-      filter((X == input$x_sphere & Y == input$y_sphere) | (X==input$y_sphere & Y == input$x_sphere)) |>
+      filter((X == input$x_sphere & Y == input$y_sphere) | (X == input$y_sphere & Y == input$x_sphere)) |>
       select(X, Y, loadings) |>
       unnest(loadings) |>
       unite(comp, X, Y) |>
@@ -129,10 +131,10 @@ server <- function(input, output, session) {
       labs(x = "Feature") +
       theme(panel.grid.major.y = element_line(colour = "grey"))
   })
-  
+
   output$trajectories_plt <- renderPlot({
     ccas() |>
-      filter((X == input$x_sphere & Y == input$y_sphere) | (X==input$y_sphere & Y == input$x_sphere)) |>
+      filter((X == input$x_sphere & Y == input$y_sphere) | (X == input$y_sphere & Y == input$x_sphere)) |>
       select(X, Y, scores) |>
       unnest(scores) |>
       unite(comp, X, Y) |>
@@ -149,7 +151,7 @@ server <- function(input, output, session) {
         mapping = aes(color = geo),
       ) +
       geom_density_2d(
-        data =  highlighted_data(),
+        data = highlighted_data(),
         color = primary_color
       ) +
       geom_density_2d(color = "#333333") +

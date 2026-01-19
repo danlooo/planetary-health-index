@@ -7,11 +7,11 @@ selected_codes <- c(
   "nama_10r_2gfcf", "nama_10r_2emhrw"
 )
 
-sphere_colors <- c("atmo" = "#87CEEB", "bio" = "#228B22", "soc" = "#808080")
+sphere_colors <- c("atmo" = "#87CEEB", "bio" = "#228B22", "socio" = "#808080")
 primary_color <- "#006c66"
 spheres <- names(sphere_colors)
 
-read_nc_feature_soc <- function(path, var_id, label = var_id) {
+read_nc_feature_socio <- function(path, var_id, label = var_id) {
   nc <- nc_open(path)
 
   mat <- ncvar_get(nc, var_id)
@@ -178,7 +178,7 @@ features <- bind_rows(
   tibble(
     sphere = "atmo",
     var_id = c("ssr", "vpd", "tp", "sp", "v10", "u10", "t2m")
-  ) |> 
+  ) |>
     mutate(label = var_id),
   tribble(
     ~var_id, ~label,
@@ -199,23 +199,23 @@ features <- bind_rows(
     ~path, ~var_id, ~label,
     "out/eurostat-nc/demo_r_d3dens.nc", "demo_r_d3dens", "Pop density",
     "out/eurostat-nc/nama_10r_3gdp.nc", "nama_10r_3gdp", "GDP",
-    # read_nc_feature_soc("phi-eu/out/eurostat-nc/nama_10r_2gvagr.nc", "nama_10r_2gvagr_B1G"),
-    # read_nc_feature_soc("phi-eu/out/eurostat-nc/nama_10r_2gvagr.nc", "nama_10r_2gvagr_B1GQ"),
-    
+    # read_nc_feature_socio("phi-eu/out/eurostat-nc/nama_10r_2gvagr.nc", "nama_10r_2gvagr_B1G"),
+    # read_nc_feature_socio("phi-eu/out/eurostat-nc/nama_10r_2gvagr.nc", "nama_10r_2gvagr_B1GQ"),
+
     # files not found
-    # read_nc_feature_soc("out/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_FOOD", "Food_Price"),
-    # read_nc_feature_soc("out/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_FUEL", "Fuel_Price"),
-    # read_nc_feature_soc("out/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_ELC_GAS", "GAS_Price"),
-    
+    # read_nc_feature_socio("out/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_FOOD", "Food_Price"),
+    # read_nc_feature_socio("out/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_FUEL", "Fuel_Price"),
+    # read_nc_feature_socio("out/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_ELC_GAS", "GAS_Price"),
+
     "out/eurostat-nc/edat_lfse_04.nc", "edat_lfse_04_T_ED3-8_Y25-64", "Education",
     "out/eurostat-nc/lfst_r_lfu3pers.nc", "lfst_r_lfu3pers_ED5-8_T_Y20-64", "Employement",
-    # read_nc_feature_soc("phi-eu/out/eurostat-nc/teicp250.nc", "teicp250_NRG"), # Energy # NO DATA
-    # read_nc_feature_soc("phi-eu/out/eurostat-nc/teicp010.nc", "teicp010_CP01"), # Food Price # NO DATA!
-    # read_nc_feature_soc("phi-eu/out/eurostat-nc/nama_10_nfa_bs.nc", "nama_10_nfa_bs_S12_N1173N"),
-    # read_nc_feature_soc("phi-eu/out/eurostat-nc/nama_10_nfa_bs.nc", "nama_10_nfa_bs_S11_N13N"),
+    # read_nc_feature_socio("phi-eu/out/eurostat-nc/teicp250.nc", "teicp250_NRG"), # Energy # NO DATA
+    # read_nc_feature_socio("phi-eu/out/eurostat-nc/teicp010.nc", "teicp010_CP01"), # Food Price # NO DATA!
+    # read_nc_feature_socio("phi-eu/out/eurostat-nc/nama_10_nfa_bs.nc", "nama_10_nfa_bs_S12_N1173N"),
+    # read_nc_feature_socio("phi-eu/out/eurostat-nc/nama_10_nfa_bs.nc", "nama_10_nfa_bs_S11_N13N"),
     "out/eurostat-nc/nama_10_nfa_bs.nc", "nama_10_nfa_bs_S13_N21ON", "Capital_stock"
   ) |>
-    mutate(sphere = "soc")
+    mutate(sphere = "socio")
 )
 
 calculate_ccas <- function(used_features) {
@@ -234,17 +234,17 @@ calculate_ccas <- function(used_features) {
     pull(data) |>
     reduce(inner_join) |>
     mutate(across(where(is.numeric), scale))
-    
-  soc_df <-
+
+  socio_df <-
     features |>
-    filter(sphere == "soc" & label %in% used_features) |>
-    mutate(data = map2(path, var_id, read_nc_feature_soc)) |>
+    filter(sphere == "socio" & label %in% used_features) |>
+    mutate(data = map2(path, var_id, read_nc_feature_socio)) |>
     pull(data) |>
     reduce(inner_join) |>
     mutate(across(where(is.numeric), scale))
 
   # "inner join" spheres
-  observations <- intersect(soc_df$observation, atmo_df$observation)
+  observations <- intersect(socio_df$observation, atmo_df$observation)
   observations <- intersect(observations, bio_df$observation)
 
   prep_cca <- function(data) {
@@ -256,29 +256,29 @@ calculate_ccas <- function(used_features) {
 
   atmo_mat <- prep_cca(atmo_df)
   bio_mat <- prep_cca(bio_df)
-  soc_mat <- prep_cca(soc_df)
+  socio_mat <- prep_cca(socio_df)
 
   # setup all canonical analyses
   ccas <- list(
-    "bio-soc" = stats::cancor(bio_mat, soc_mat),
+    "bio-socio" = stats::cancor(bio_mat, socio_mat),
     "bio-atmo" = stats::cancor(bio_mat, atmo_mat),
-    "soc-bio" = stats::cancor(soc_mat, bio_mat),
-    "soc-atmo" = stats::cancor(soc_mat, atmo_mat),
-    "atmo-soc" = stats::cancor(atmo_mat, soc_mat),
+    "socio-bio" = stats::cancor(socio_mat, bio_mat),
+    "socio-atmo" = stats::cancor(socio_mat, atmo_mat),
+    "atmo-socio" = stats::cancor(atmo_mat, socio_mat),
     "atmo-bio" = stats::cancor(atmo_mat, bio_mat)
   )
 
   mats <- list(
     "atmo" = atmo_df,
     "bio" = bio_df,
-    "soc" = soc_df
+    "socio" = socio_df
   ) |>
     lapply(prep_cca)
 
   ccas <-
     expand_grid(
-      X = c("atmo", "bio", "soc"),
-      Y = c("atmo", "bio", "soc")
+      X = c("atmo", "bio", "socio"),
+      Y = c("atmo", "bio", "socio")
     ) |>
     filter(X != Y) |>
     mutate(
