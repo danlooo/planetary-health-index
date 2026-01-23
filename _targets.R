@@ -38,19 +38,13 @@ list(
     }
   ),
   tar_target(
-    name = eurostat_files,
+    name = eurostat_data,
     pattern = map(eurostat_datasets),
     command = {
       eurostat_datasets |>
         transmute(
           code,
-          path = map_chr(code, ~ {
-            # prevent data race on eurostat cache metadata json
-            data <- get_eurostat(.x, cache = FALSE)
-            path <- str_glue("out/eurostat-raw/{.x}.parquet")
-            write_parquet(data, path)
-            path
-          })
+          data = map(code, ~ get_eurostat(.x, cache = FALSE))
         )
     }
   ),
@@ -67,16 +61,15 @@ list(
           geo3 = geo,
           geo2 = map_chr(geo3, ~ str_sub(.x, 1, 4)),
           geo1 = map_chr(geo3, ~ str_sub(.x, 1, 3)),
-          geo0 = map_chr(geo3, ~ str_sub(.x, 1, 2)),
+          geo0 = map_chr(geo3, ~ str_sub(.x, 1, 2))
         )
     }
   ),
   tar_target(
     name = eurostat_metadata,
-    pattern = map(eurostat_files),
+    pattern = map(eurostat_data),
     command = {
-      eurostat_files |>
-        mutate(data = map(path, ~ .x |> read_parquet())) |>
+      eurostat_data |>
         transmute(
           code,
           colnames = map(data, ~ .x |> colnames()),
@@ -112,13 +105,13 @@ list(
     }
   ),
   tar_target(
-    name = eurostat_cube_files,
-    pattern = map(eurostat_files),
+    name = eurostat_cube,
     command = {
-      eurostat_files |>
-        mutate(
-          data = map2(path, code, ~ {
-            read_parquet(.x) |>
+      eurostat_data |>
+        transmute(
+          code,
+          data = map2(data, code, possibly(otherwise = NA, ~ {
+            .x |>
               # discard aggregated data
               filter(!str_starts(geo, "EU|EA|EEA")) |> # e.g euro area
               group_by(nut_level = nchar(geo) - 2) |>
@@ -130,14 +123,22 @@ list(
               mutate(code = .y) |>
               select(code, everything()) |>
               unite(var, -any_of(setdiff(stable_columns, "code")), sep = "_") |>
+              distinct(var, geo, TIME_PERIOD, .keep_all = TRUE) |>
               # re-scale
               resample_time_to_quarter() |>
-              resample_space_to_nuts3(nuts3_regions, eurostat_regions)
-          }),
-          path = str_glue("out/eurostat-nc/{code}.nc"),
-          out = map2_chr(data, path, write_nc_tibble)
+              resample_space_to_nuts3(nuts3_regions, eurostat_regions) |>
+              unite("space_time", geo, TIME_PERIOD) |>
+              arrange(space_time) |>
+              select(var, space_time, values) |>
+              distinct(var, space_time, .keep_all = TRUE) |>
+              pivot_wider(names_from = var, values_from = values)
+          }))
         ) |>
-        select(-out)
+        filter(!is.na(data)) |>
+        pull(data) |>
+        reduce(full_join) |>
+        column_to_rownames("space_time") |>
+        as.matrix()
     }
   )
 )

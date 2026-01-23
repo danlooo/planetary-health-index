@@ -2,10 +2,12 @@ stable_columns <- c("code", "freq", "unit", "geo", "TIME_PERIOD", "values")
 
 selected_codes <- c(
   "nama_10r_3gdp", "nama_10r_3gva", "nama_10r_2gvagr",
-  "prc_hicp_midx", "teicp010", "teicp250", "nama_10_nfa_bs",
+  "teicp010", "teicp250", "nama_10_nfa_bs",
   "lfst_r_lfu3pers", "demo_r_d3dens", "ilc_li02", "ilc_di11", "edat_lfse_04",
   "nama_10r_2gfcf", "nama_10r_2emhrw"
 )
+
+# prc_hicp_midx is too big for 16G memory
 
 sphere_colors <- c("atmo" = "#87CEEB", "bio" = "#228B22", "socio" = "#808080")
 primary_color <- "#006c66"
@@ -24,7 +26,7 @@ read_nc_feature_socio <- function(path, var_id, label = var_id) {
     unite("observation", geo, TIME_PERIOD)
 }
 
-read_nc_feature_bioatmo <- function(var_id, path = "out/countrydatacubes/level_3_quarter.nc") {
+read_nc_feature_bioatmo <- function(var_id, path = "data/level_3_quarter.nc") {
   nc <- nc_open(path)
 
   mat <- ncvar_get(nc, var_id)
@@ -40,8 +42,8 @@ read_nc_feature_bioatmo <- function(var_id, path = "out/countrydatacubes/level_3
 
 write_nc_tibble <- function(data, nc_path) {
   # uniform dimension with same shape of other cubes
-  times <- read_lines("quarters.txt")
-  locations <- read_lines("geo3.txt")
+  times <- read_lines("data/quarters.txt")
+  locations <- read_lines("data/geo3.txt")
 
   fill_value <- 9.96921e36
 
@@ -179,7 +181,7 @@ features <- bind_rows(
     sphere = "atmo",
     var_id = c("ssr", "vpd", "tp", "sp", "v10", "u10", "t2m")
   ) |>
-    mutate(label = var_id),
+    mutate(label = var_id, path = "data/level_3_quarter.nc"),
   tribble(
     ~var_id, ~label,
     "Day_AQUA_Mxx21x1_061_gapfilled_QCflags_dyn", "Day water Mxx",
@@ -194,26 +196,26 @@ features <- bind_rows(
     "GPP", "GPP",
     "skt", "skt"
   ) |>
-    mutate(sphere = "bio"),
+    mutate(sphere = "bio", path = "data/level_3_quarter.nc"),
   tribble(
     ~path, ~var_id, ~label,
-    "out/eurostat-nc/demo_r_d3dens.nc", "demo_r_d3dens", "Pop density",
-    "out/eurostat-nc/nama_10r_3gdp.nc", "nama_10r_3gdp", "GDP",
-    # read_nc_feature_socio("phi-eu/out/eurostat-nc/nama_10r_2gvagr.nc", "nama_10r_2gvagr_B1G"),
-    # read_nc_feature_socio("phi-eu/out/eurostat-nc/nama_10r_2gvagr.nc", "nama_10r_2gvagr_B1GQ"),
+    "data/eurostat-nc/demo_r_d3dens.nc", "demo_r_d3dens", "Pop density",
+    "data/eurostat-nc/nama_10r_3gdp.nc", "nama_10r_3gdp", "GDP",
+    # read_nc_feature_socio("phi-eu/data/eurostat-nc/nama_10r_2gvagr.nc", "nama_10r_2gvagr_B1G"),
+    # read_nc_feature_socio("phi-eu/data/eurostat-nc/nama_10r_2gvagr.nc", "nama_10r_2gvagr_B1GQ"),
 
     # files not found
-    # read_nc_feature_socio("out/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_FOOD", "Food_Price"),
-    # read_nc_feature_socio("out/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_FUEL", "Fuel_Price"),
-    # read_nc_feature_socio("out/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_ELC_GAS", "GAS_Price"),
+    # read_nc_feature_socio("data/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_FOOD", "Food_Price"),
+    # read_nc_feature_socio("data/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_FUEL", "Fuel_Price"),
+    # read_nc_feature_socio("data/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_ELC_GAS", "GAS_Price"),
 
-    "out/eurostat-nc/edat_lfse_04.nc", "edat_lfse_04_T_ED3-8_Y25-64", "Education",
-    "out/eurostat-nc/lfst_r_lfu3pers.nc", "lfst_r_lfu3pers_ED5-8_T_Y20-64", "Employement",
-    # read_nc_feature_socio("phi-eu/out/eurostat-nc/teicp250.nc", "teicp250_NRG"), # Energy # NO DATA
-    # read_nc_feature_socio("phi-eu/out/eurostat-nc/teicp010.nc", "teicp010_CP01"), # Food Price # NO DATA!
-    # read_nc_feature_socio("phi-eu/out/eurostat-nc/nama_10_nfa_bs.nc", "nama_10_nfa_bs_S12_N1173N"),
-    # read_nc_feature_socio("phi-eu/out/eurostat-nc/nama_10_nfa_bs.nc", "nama_10_nfa_bs_S11_N13N"),
-    "out/eurostat-nc/nama_10_nfa_bs.nc", "nama_10_nfa_bs_S13_N21ON", "Capital_stock"
+    "data/eurostat-nc/edat_lfse_04.nc", "edat_lfse_04_T_ED3-8_Y25-64", "Education",
+    "data/eurostat-nc/lfst_r_lfu3pers.nc", "lfst_r_lfu3pers_ED5-8_T_Y20-64", "Employement",
+    # read_nc_feature_socio("phi-eu/data/eurostat-nc/teicp250.nc", "teicp250_NRG"), # Energy # NO DATA
+    # read_nc_feature_socio("phi-eu/data/eurostat-nc/teicp010.nc", "teicp010_CP01"), # Food Price # NO DATA!
+    # read_nc_feature_socio("phi-eu/data/eurostat-nc/nama_10_nfa_bs.nc", "nama_10_nfa_bs_S12_N1173N"),
+    # read_nc_feature_socio("phi-eu/data/eurostat-nc/nama_10_nfa_bs.nc", "nama_10_nfa_bs_S11_N13N"),
+    "data/eurostat-nc/nama_10_nfa_bs.nc", "nama_10_nfa_bs_S13_N21ON", "Capital stock"
   ) |>
     mutate(sphere = "socio")
 )

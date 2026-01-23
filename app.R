@@ -9,7 +9,7 @@ library(ncdf4)
 
 source("lib.R")
 
-tar_load(nuts3_regions)
+nuts3_regions <- read_csv("data/nuts3_regions.csv")
 
 withSpinner <- partial(shinycssloaders::withSpinner, color = primary_color, type = 8)
 
@@ -63,7 +63,7 @@ ui <- page_navbar(
       "Each bar represents the importance of that feature in the CCA."
     )),
     withSpinner(
-      plotOutput("loadings_plt", height = "80vh")
+      plotOutput("loadings_plt")
     )
   ),
   nav_panel(
@@ -79,6 +79,12 @@ ui <- page_navbar(
 )
 
 server <- function(input, output, session) {
+  paste0(
+    "This app shows preliminary results ",
+    "for demonstration purposes only."
+  ) |>
+    showNotification(duration = Inf, type = "warning")
+
   ccas <- reactive({
     calculate_ccas(input$used_features)
   })
@@ -86,7 +92,7 @@ server <- function(input, output, session) {
   highlighted_data <- reactive(
     ~ filter(.x, str_detect(name, input$highlight_str))
   )
-  
+
   output$features_table <- renderTable(features |> select(sphere, var_id, label))
 
   output$scores_plt <- renderPlot(
@@ -128,12 +134,12 @@ server <- function(input, output, session) {
       unite(comp, X, Y) |>
       left_join(features, by = c("var" = "var_id")) |>
       ggplot(aes(label, CCA1)) +
-      geom_hline(yintercept = 0) +
       geom_bar(stat = "identity") +
+      geom_hline(yintercept = 0) +
       coord_flip() +
       facet_grid(comp ~ ., scales = "free_y", space = "free_y") +
-      labs(x = "Feature") +
-      theme(panel.grid.major.y = element_line(colour = "grey"))
+      theme(panel.grid.major.y = element_line(colour = "grey")) +
+      labs(x = "Feature")
   })
 
   output$trajectories_plt <- renderPlot({
@@ -159,6 +165,7 @@ server <- function(input, output, session) {
         color = primary_color
       ) +
       geom_density_2d(color = "#333333") +
+      scale_color_hue(l = 40) +
       coord_fixed() +
       facet_wrap(~comp) +
       labs(color = "NUTS region")
