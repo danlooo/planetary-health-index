@@ -45,24 +45,18 @@ ui <- page_navbar(
     tableOutput("features_table")
   ),
   nav_panel(
-    title = "Scores",
+    title = "Plot",
     div(paste0(
       "One feature sphere is used to predict another one, and vice versa. ",
       "Each point represents the first CCA component of a NUTS3 region at a given quarter. ",
-      "Many points close to the grey identity line indicate that the feature spheres are highly linearly related."
-    )),
-    withSpinner(
-      plotOutput("scores_plt", height = "80vh")
-    )
-  ),
-  nav_panel(
-    title = "Loadings",
-    div(paste0(
-      "One feature sphere is used to predict another one, and vice versa. ",
+      "Many points close to the grey identity line indicate that the feature spheres are highly linearly related.",
       "Each bar represents the importance of that feature in the CCA."
     )),
     withSpinner(
-      plotOutput("loadings_plt")
+      plotOutput("scores_plt", height = "60vh")
+    ),
+    withSpinner(
+      plotOutput("loadings_plt", height = "20vh")
     )
   ),
   nav_panel(
