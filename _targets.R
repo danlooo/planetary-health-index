@@ -8,6 +8,7 @@ library(arrow)
 # dyn.load("/opt/ohpc/pub/libs/hwloc/lib/libhwloc.so.15")
 # dyn.load("/opt/ohpc/pub/libs/gnu9/openmpi4/hdf5/1.10.8/lib/libhdf5_hl.so.100")
 library(RNetCDF)
+library(ncdf4)
 
 library(rrcov3way)
 
@@ -105,7 +106,28 @@ list(
     }
   ),
   tar_target(
-    name = eurostat_cube,
+    name = bioatmo_data,
+    command = {
+      nc <- nc_open("data/level_3_quarter.nc")
+
+      tibble(var_id = names(nc$var)) |>
+        mutate(
+          data = map(var_id, ~ {
+            mat <- ncvar_get(nc, .x)
+            rownames(mat) <- nc$dim$time$vals
+            colnames(mat) <- nc$dim$country$vals
+
+            as_tibble(mat) |>
+              mutate(TIME_PERIOD = nc$dim$time$vals) |>
+              pivot_longer(-TIME_PERIOD, names_to = "geo", values_to = .x) |>
+              unite("space_time", geo, TIME_PERIOD)
+          })
+        ) |>
+        pull(data)
+    }
+  ),
+  tar_target(
+    name = cube,
     command = {
       eurostat_data |>
         transmute(
@@ -136,8 +158,10 @@ list(
         ) |>
         filter(!is.na(data)) |>
         pull(data) |>
+        append(bioatmo_data) |>
         reduce(full_join) |>
         column_to_rownames("space_time") |>
+        mutate(across(everything(), ~ replace_na(.x, 0))) |>
         as.matrix()
     }
   )

@@ -13,31 +13,49 @@ sphere_colors <- c("atmo" = "#87CEEB", "bio" = "#228B22", "socio" = "#808080")
 primary_color <- "#006c66"
 spheres <- names(sphere_colors)
 
-read_nc_feature_socio <- function(path, var_id, label = var_id) {
-  nc <- nc_open(path)
-
-  mat <- ncvar_get(nc, var_id)
-  rownames(mat) <- nc$dim$TIME_PERIOD$vals
-  colnames(mat) <- nc$dim$geo$vals
-
-  as_tibble(mat) |>
-    mutate(TIME_PERIOD = nc$dim$TIME_PERIOD$vals) |>
-    pivot_longer(-TIME_PERIOD, names_to = "geo", values_to = label) |>
-    unite("observation", geo, TIME_PERIOD)
-}
-
-read_nc_feature_bioatmo <- function(var_id, path = "data/level_3_quarter.nc") {
-  nc <- nc_open(path)
-
-  mat <- ncvar_get(nc, var_id)
-  rownames(mat) <- nc$dim$time$vals
-  colnames(mat) <- nc$dim$country$vals
-
-  as_tibble(mat) |>
-    mutate(TIME_PERIOD = nc$dim$time$vals) |>
-    pivot_longer(-TIME_PERIOD, names_to = "geo", values_to = var_id) |>
-    unite("observation", geo, TIME_PERIOD)
-}
+features <- bind_rows(
+  tibble(
+    sphere = "atmo",
+    var_id = c("ssr", "vpd", "tp", "sp", "v10", "u10", "t2m")
+  ) |>
+    mutate(label = var_id),
+  tribble(
+    ~var_id, ~label,
+    "Day_AQUA_Mxx21x1_061_gapfilled_QCflags_dyn", "Day water Mxx",
+    "Night_AQUA_Mxx21x1_061_gapfilled_QCflags_dyn", "Night water Mxx",
+    "NDWI_band7gapfilled_061_QCdyn", "NDWI",
+    "NDVIgapfilled_061_QCdyn", "NDVI",
+    "NIRvgapfilled_061_QCdyn", "NIRv",
+    "NEE", "NEE",
+    "H", "H",
+    "ET", "ET",
+    "ET_T", "ET_T",
+    "GPP", "GPP",
+    "skt", "skt"
+  ) |>
+    mutate(sphere = "bio"),
+  tribble(
+    ~var_id, ~label,
+    "demo_r_d3dens", "Pop density",
+    "nama_10r_3gdp", "GDP",
+    # read_nc_feature_socio("phi-eu/data/eurostat-nc/nama_10r_2gvagr.nc", "nama_10r_2gvagr_B1G"),
+    # read_nc_feature_socio("phi-eu/data/eurostat-nc/nama_10r_2gvagr.nc", "nama_10r_2gvagr_B1GQ"),
+    
+    # files not found
+    # read_nc_feature_socio("data/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_FOOD", "Food_Price"),
+    # read_nc_feature_socio("data/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_FUEL", "Fuel_Price"),
+    # read_nc_feature_socio("data/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_ELC_GAS", "GAS_Price"),
+    
+    "edat_lfse_04_T_ED3-8_Y25-64", "Education",
+    "lfst_r_lfu3pers_ED5-8_T_Y20-64", "Employement",
+    # read_nc_feature_socio("phi-eu/data/eurostat-nc/teicp250.nc", "teicp250_NRG"), # Energy # NO DATA
+    # read_nc_feature_socio("phi-eu/data/eurostat-nc/teicp010.nc", "teicp010_CP01"), # Food Price # NO DATA!
+    # read_nc_feature_socio("phi-eu/data/eurostat-nc/nama_10_nfa_bs.nc", "nama_10_nfa_bs_S12_N1173N"),
+    # read_nc_feature_socio("phi-eu/data/eurostat-nc/nama_10_nfa_bs.nc", "nama_10_nfa_bs_S11_N13N"),
+    "nama_10_nfa_bs_S13_N21ON", "Capital stock"
+  ) |>
+    mutate(sphere = "socio")
+)
 
 
 write_nc_tibble <- function(data, nc_path) {
@@ -176,134 +194,24 @@ resample_space_to_nuts3 <- function(data, nuts3_regions, eurostat_regions) {
   stop("nuts_level value not implemented")
 }
 
-features <- bind_rows(
-  tibble(
-    sphere = "atmo",
-    var_id = c("ssr", "vpd", "tp", "sp", "v10", "u10", "t2m")
+calculate_cca <- function(cube, x_features, y_features) {
+  cca <- stats::cancor(cube[,x_features], cube[,y_features])
+  U <- as.matrix(cube[,x_features]) %*% cca$xcoef
+  V <- as.matrix(cube[,y_features]) %*% cca$ycoef
+  
+  scores <- tibble(
+    CCA1 = U[, 1],
+    CCA2 = U[, 2],
+    ID = rownames(U)
   ) |>
-    mutate(label = var_id, path = "data/level_3_quarter.nc"),
-  tribble(
-    ~var_id, ~label,
-    "Day_AQUA_Mxx21x1_061_gapfilled_QCflags_dyn", "Day water Mxx",
-    "Night_AQUA_Mxx21x1_061_gapfilled_QCflags_dyn", "Night water Mxx",
-    "NDWI_band7gapfilled_061_QCdyn", "NDWI",
-    "NDVIgapfilled_061_QCdyn", "NDVI",
-    "NIRvgapfilled_061_QCdyn", "NIRv",
-    "NEE", "NEE",
-    "H", "H",
-    "ET", "ET",
-    "ET_T", "ET_T",
-    "GPP", "GPP",
-    "skt", "skt"
-  ) |>
-    mutate(sphere = "bio", path = "data/level_3_quarter.nc"),
-  tribble(
-    ~path, ~var_id, ~label,
-    "data/eurostat-nc/demo_r_d3dens.nc", "demo_r_d3dens", "Pop density",
-    "data/eurostat-nc/nama_10r_3gdp.nc", "nama_10r_3gdp", "GDP",
-    # read_nc_feature_socio("phi-eu/data/eurostat-nc/nama_10r_2gvagr.nc", "nama_10r_2gvagr_B1G"),
-    # read_nc_feature_socio("phi-eu/data/eurostat-nc/nama_10r_2gvagr.nc", "nama_10r_2gvagr_B1GQ"),
-
-    # files not found
-    # read_nc_feature_socio("data/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_FOOD", "Food_Price"),
-    # read_nc_feature_socio("data/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_FUEL", "Fuel_Price"),
-    # read_nc_feature_socio("data/eurostat-nc/prc_hicp_midx.nc", "prc_hicp_midx_ELC_GAS", "GAS_Price"),
-
-    "data/eurostat-nc/edat_lfse_04.nc", "edat_lfse_04_T_ED3-8_Y25-64", "Education",
-    "data/eurostat-nc/lfst_r_lfu3pers.nc", "lfst_r_lfu3pers_ED5-8_T_Y20-64", "Employement",
-    # read_nc_feature_socio("phi-eu/data/eurostat-nc/teicp250.nc", "teicp250_NRG"), # Energy # NO DATA
-    # read_nc_feature_socio("phi-eu/data/eurostat-nc/teicp010.nc", "teicp010_CP01"), # Food Price # NO DATA!
-    # read_nc_feature_socio("phi-eu/data/eurostat-nc/nama_10_nfa_bs.nc", "nama_10_nfa_bs_S12_N1173N"),
-    # read_nc_feature_socio("phi-eu/data/eurostat-nc/nama_10_nfa_bs.nc", "nama_10_nfa_bs_S11_N13N"),
-    "data/eurostat-nc/nama_10_nfa_bs.nc", "nama_10_nfa_bs_S13_N21ON", "Capital stock"
-  ) |>
-    mutate(sphere = "socio")
-)
-
-calculate_ccas <- function(used_features) {
-  atmo_df <-
-    features |>
-    filter(sphere == "atmo" & label %in% used_features) |>
-    mutate(data = map(var_id, read_nc_feature_bioatmo)) |>
-    pull(data) |>
-    reduce(inner_join) |>
-    mutate(across(where(is.numeric), scale))
-
-  bio_df <-
-    features |>
-    filter(sphere == "bio" & label %in% used_features) |>
-    mutate(data = map(var_id, read_nc_feature_bioatmo)) |>
-    pull(data) |>
-    reduce(inner_join) |>
-    mutate(across(where(is.numeric), scale))
-
-  socio_df <-
-    features |>
-    filter(sphere == "socio" & label %in% used_features) |>
-    mutate(data = map2(path, var_id, read_nc_feature_socio)) |>
-    pull(data) |>
-    reduce(inner_join) |>
-    mutate(across(where(is.numeric), scale))
-
-  # "inner join" spheres
-  observations <- intersect(socio_df$observation, atmo_df$observation)
-  observations <- intersect(observations, bio_df$observation)
-
-  prep_cca <- function(data) {
-    data |>
-      filter(observation %in% observations) |>
-      mutate(across(everything(), ~ replace_na(., 0))) |>
-      column_to_rownames("observation")
-  }
-
-  atmo_mat <- prep_cca(atmo_df)
-  bio_mat <- prep_cca(bio_df)
-  socio_mat <- prep_cca(socio_df)
-
-  # setup all canonical analyses
-  ccas <- list(
-    "bio-socio" = stats::cancor(bio_mat, socio_mat),
-    "bio-atmo" = stats::cancor(bio_mat, atmo_mat),
-    "socio-bio" = stats::cancor(socio_mat, bio_mat),
-    "socio-atmo" = stats::cancor(socio_mat, atmo_mat),
-    "atmo-socio" = stats::cancor(atmo_mat, socio_mat),
-    "atmo-bio" = stats::cancor(atmo_mat, bio_mat)
+    separate(ID, c("geo", "time"), sep = "_") |>
+    mutate(country = geo |> str_extract("^[A-z]+"))
+  
+  loadings <- tibble(
+    var_id = rownames(cca$xcoef),
+    CCA1 = cca$xcoef[, 1],
+    CCA2 = cca$xcoef[, 2]
   )
-
-  mats <- list(
-    "atmo" = atmo_df,
-    "bio" = bio_df,
-    "socio" = socio_df
-  ) |>
-    lapply(prep_cca)
-
-  ccas <-
-    expand_grid(
-      X = c("atmo", "bio", "socio"),
-      Y = c("atmo", "bio", "socio")
-    ) |>
-    filter(X != Y) |>
-    mutate(
-      cca = map2(X, Y, ~ stats::cancor(mats[[.x]], mats[[.y]])),
-      scores = pmap(list(X, Y, cca), function(X, Y, cca) {
-        U <- as.matrix(mats[[X]]) %*% cca$xcoef
-        V <- as.matrix(mats[[Y]]) %*% cca$ycoef
-
-        tibble(
-          CCA1 = U[, 1],
-          CCA2 = U[, 2],
-          ID = rownames(U)
-        ) |>
-          separate(ID, c("geo", "time"), sep = "_") |>
-          mutate(country = geo |> str_extract("^[A-z]+"))
-      }),
-      loadings = pmap(list(cca), function(cca) {
-        tibble(
-          var = rownames(cca$xcoef),
-          CCA1 = cca$xcoef[, 1],
-          CCA2 = cca$xcoef[, 2]
-        )
-      })
-    )
-  return(ccas)
+  
+  list(cca=cca,scores=scores, loadings=loadings)
 }

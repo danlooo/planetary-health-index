@@ -1,8 +1,6 @@
 # Use the official tidyverse image as the base image
 FROM rocker/tidyverse:4.3.3
 
-ENV DATA_PASSWORD=""
-
 # Install dependencies
 RUN apt-get update && apt-get install -y \
     sudo \
@@ -18,11 +16,10 @@ RUN apt-get update && apt-get install -y \
 
 COPY install.R ./
 RUN Rscript install.R
+
 WORKDIR /srv/shiny-server
-COPY app.R ./
-COPY lib.R ./
-COPY data.gpg ./data.gpg
+COPY *.R ./
+COPY data data/
+RUN  R -e "targets::tar_make()"
 EXPOSE 80
-CMD rm -rf data && mkdir data && \
-    gpg --decrypt --batch --yes --pinentry-mode loopback --passphrase $DATA_PASSWORD data.gpg | tar -xzf - -C . && \
-    R -e "shiny::runApp('/srv/shiny-server', host='0.0.0.0', port=80)"
+CMD R -e "shiny::runApp('/srv/shiny-server', host='0.0.0.0', port=80)"

@@ -10,9 +10,8 @@ library(ncdf4)
 source("lib.R")
 
 nuts3_regions <- read_csv("data/nuts3_regions.csv")
-
+tar_load(cube)
 withSpinner <- partial(shinycssloaders::withSpinner, color = primary_color, type = 8)
-
 theme_set(
   theme_classic(base_size = 18) + theme(
     legend.position = "bottom"
@@ -85,29 +84,36 @@ server <- function(input, output, session) {
   ) |>
     showNotification(duration = Inf, type = "warning")
 
-  ccas <- reactive({
-    calculate_ccas(input$used_features)
-  })
-
   highlighted_data <- reactive(
     ~ filter(.x, str_detect(name, input$highlight_str))
   )
-
+  
+  x_features <- reactive({
+    features |>
+      filter(sphere == input$x_sphere & label %in% input$used_features) |>
+      pull(var_id)
+  })
+  
+  y_features <- reactive({
+    features |>
+      filter(sphere == input$y_sphere & label %in% input$used_features) |>
+      pull(var_id)
+  })
+  
+  cca_fwd <- reactive(calculate_cca(cube, x_features(), y_features()))
+  cca_rev <- reactive(calculate_cca(cube, y_features(), x_features()))
+  
   output$features_table <- renderTable(features |> select(sphere, var_id, label))
 
   output$scores_plt <- renderPlot(
     bg = "transparent",
     {
-      ccas() |>
-        filter((X == input$x_sphere & Y == input$y_sphere) | (X == input$y_sphere & Y == input$x_sphere)) |>
-        select(X, Y, scores) |>
-        unnest(scores) |>
-        unite(comp, X, Y) |>
-        select(comp, CCA1, geo, time) |>
-        pivot_wider(names_from = comp, values_from = CCA1) |>
-        left_join(nuts3_regions, by = c("geo" = "geo3")) |>
-        unite("name", geo, time, sep = "-") |>
-        ggplot(aes_string(paste(input$x_sphere, input$y_sphere, sep = "_"), paste(input$y_sphere, input$x_sphere, sep = "_"))) +
+      inner_join(
+        cca_fwd()$scores |> select(fwd=CCA1, geo, time),
+        cca_rev()$scores |> select(rev=CCA1, geo, time)
+      ) |>
+        unite("name", geo,time) |>
+        ggplot(aes(fwd, rev)) +
         geom_abline(color = "darkgrey") +
         geom_point(color = "darkgrey", alpha = 0.03) +
         geom_point(
@@ -122,35 +128,30 @@ server <- function(input, output, session) {
         ) +
         geom_density_2d(color = "#333333") +
         coord_fixed() +
-        guides(fill = "none")
+        guides(fill = "none") +
+        labs(x = paste0(input$x_sphere, "-", input$y_sphere), y = paste0(input$y_sphere, "-", input$x_sphere))
     }
   )
 
   output$loadings_plt <- renderPlot({
-    ccas() |>
-      filter((X == input$x_sphere & Y == input$y_sphere) | (X == input$y_sphere & Y == input$x_sphere)) |>
-      select(X, Y, loadings) |>
-      unnest(loadings) |>
-      unite(comp, X, Y) |>
-      left_join(features, by = c("var" = "var_id")) |>
+    bind_rows(
+      cca_fwd()$loadings,
+      cca_rev()$loadings
+    ) |>
+      left_join(features) |>
       ggplot(aes(label, CCA1)) +
       geom_bar(stat = "identity") +
       geom_hline(yintercept = 0) +
       coord_flip() +
-      facet_grid(comp ~ ., scales = "free_y", space = "free_y") +
-      theme(panel.grid.major.y = element_line(colour = "grey")) +
       labs(x = "Feature")
   })
 
   output$trajectories_plt <- renderPlot({
-    ccas() |>
-      filter((X == input$x_sphere & Y == input$y_sphere) | (X == input$y_sphere & Y == input$x_sphere)) |>
-      select(X, Y, scores) |>
-      unnest(scores) |>
-      unite(comp, X, Y) |>
-      group_by(geo) |>
-      arrange(time) |>
-      mutate(name = paste(geo, time, sep = "-")) |>
+    bind_rows(
+      cca_fwd()$scores |> mutate(direction= paste0(input$x_sphere, "-", input$y_sphere)),
+      cca_rev()$scores |> mutate(direction= paste0(input$y_sphere, "-", input$x_sphere))
+    ) |>
+      mutate(name = paste0(geo, time)) |>
       ggplot(aes(CCA1, CCA2)) +
       geom_point(
         color = "darkgrey",
@@ -167,7 +168,7 @@ server <- function(input, output, session) {
       geom_density_2d(color = "#333333") +
       scale_color_hue(l = 40) +
       coord_fixed() +
-      facet_wrap(~comp) +
+      facet_wrap(~direction) +
       labs(color = "NUTS region")
   })
 }
