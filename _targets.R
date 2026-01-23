@@ -1,15 +1,14 @@
+# load libs for cdf4
+# dyn.load("/opt/ohpc/pub/libs/hwloc/lib/libhwloc.so.15")
+# dyn.load("/opt/ohpc/pub/libs/gnu9/openmpi4/hdf5/1.10.8/lib/libhdf5_hl.so.100")
+
 library(tidyverse)
 library(targets)
 library(crew)
 library(eurostat)
 library(arrow)
-
-# load libs for cdf4
-# dyn.load("/opt/ohpc/pub/libs/hwloc/lib/libhwloc.so.15")
-# dyn.load("/opt/ohpc/pub/libs/gnu9/openmpi4/hdf5/1.10.8/lib/libhdf5_hl.so.100")
 library(RNetCDF)
 library(ncdf4)
-
 library(rrcov3way)
 
 source("lib.R")
@@ -123,7 +122,7 @@ list(
               unite("space_time", geo, TIME_PERIOD)
           })
         ) |>
-        pull(data)
+        deframe()
     }
   ),
   tar_target(

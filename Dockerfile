@@ -1,5 +1,5 @@
 # Use the official tidyverse image as the base image
-FROM rocker/tidyverse:4.3.3
+FROM rocker/geospatial:4.3.3
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -20,6 +20,7 @@ RUN Rscript install.R
 WORKDIR /srv/shiny-server
 COPY *.R ./
 COPY data data/
+COPY _targets _targets/
 RUN  R -e "targets::tar_make()"
 EXPOSE 80
 CMD R -e "shiny::runApp('/srv/shiny-server', host='0.0.0.0', port=80)"

@@ -6,6 +6,8 @@ library(ggsci)
 library(targets)
 library(shinycssloaders)
 library(ncdf4)
+library(lubridate)
+library(eurostat)
 
 source("lib.R")
 
@@ -16,6 +18,11 @@ theme_set(
   theme_classic(base_size = 18) + theme(
     legend.position = "bottom"
   )
+)
+quarters <- seq(
+  from = ymd("2001-01-01"),
+  to   = ymd("2025-12-31"),
+  by   = "3 months"
 )
 
 ui <- page_navbar(
@@ -68,7 +75,18 @@ ui <- page_navbar(
     withSpinner(
       plotOutput("trajectories_plt", height = "80vh")
     )
-  )
+  ),
+  nav_panel(
+    title = "Map",
+    fluidRow(
+      selectInput("selected_feature", "Select feature:", choices = features$label),
+      sliderInput("selected_year", "Select year:", min = 2012, max = 2021, value = 2021),
+      selectInput("selected_quarter", "Select quarter:", choices = c("Q1", "Q2", "Q3", "Q4"))
+    ),
+    withSpinner(
+      plotOutput("map_plt", height = "80vh")
+    )
+  ),
 )
 
 server <- function(input, output, session) {
@@ -81,32 +99,32 @@ server <- function(input, output, session) {
   highlighted_data <- reactive(
     ~ filter(.x, str_detect(name, input$highlight_str))
   )
-  
+
   x_features <- reactive({
     features |>
       filter(sphere == input$x_sphere & label %in% input$used_features) |>
       pull(var_id)
   })
-  
+
   y_features <- reactive({
     features |>
       filter(sphere == input$y_sphere & label %in% input$used_features) |>
       pull(var_id)
   })
-  
+
   cca_fwd <- reactive(calculate_cca(cube, x_features(), y_features()))
   cca_rev <- reactive(calculate_cca(cube, y_features(), x_features()))
-  
+
   output$features_table <- renderTable(features |> select(sphere, var_id, label))
 
   output$scores_plt <- renderPlot(
     bg = "transparent",
     {
       inner_join(
-        cca_fwd()$scores |> select(fwd=CCA1, geo, time),
-        cca_rev()$scores |> select(rev=CCA1, geo, time)
+        cca_fwd()$scores |> select(fwd = CCA1, geo, time),
+        cca_rev()$scores |> select(rev = CCA1, geo, time)
       ) |>
-        unite("name", geo,time) |>
+        unite("name", geo, time) |>
         ggplot(aes(fwd, rev)) +
         geom_abline(color = "darkgrey") +
         geom_point(color = "darkgrey", alpha = 0.03) +
@@ -142,8 +160,8 @@ server <- function(input, output, session) {
 
   output$trajectories_plt <- renderPlot({
     bind_rows(
-      cca_fwd()$scores |> mutate(direction= paste0(input$x_sphere, "-", input$y_sphere)),
-      cca_rev()$scores |> mutate(direction= paste0(input$y_sphere, "-", input$x_sphere))
+      cca_fwd()$scores |> mutate(direction = paste0(input$x_sphere, "-", input$y_sphere)),
+      cca_rev()$scores |> mutate(direction = paste0(input$y_sphere, "-", input$x_sphere))
     ) |>
       mutate(name = paste0(geo, time)) |>
       ggplot(aes(CCA1, CCA2)) +
@@ -164,6 +182,44 @@ server <- function(input, output, session) {
       coord_fixed() +
       facet_wrap(~direction) +
       labs(color = "NUTS region")
+  })
+
+
+
+  nuts3_sf <- get_eurostat_geospatial(
+    output_class = "sf",
+    resolution = "60",
+    nuts_level = "3"
+  )
+
+  output$map_plt <- renderPlot({
+    cur_feature <-
+      features |>
+      filter(label == input$selected_feature) |>
+      pull(var_id) |>
+      first()
+
+    cur_time <- paste0(input$selected_year, "-", input$selected_quarter)
+
+    nuts3_sf |>
+      left_join(
+        tibble(
+          space_time = rownames(cube),
+          value = cube[, cur_feature]
+        ) |>
+          separate(space_time, c("geo", "time"), sep = "_") |>
+          filter(time == cur_time)
+      ) |>
+      ggplot() +
+      geom_sf(aes(fill = value)) +
+      scale_fill_viridis_c() +
+      theme_void() +
+      coord_sf(
+        xlim = c(2377294, 7453440),
+        ylim = c(1313597, 5628510),
+        crs = 3035
+      ) +
+      labs(fill = input$selected_feature)
   })
 }
 
