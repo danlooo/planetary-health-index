@@ -41,7 +41,7 @@ ui <- page_navbar(
     radioButtons("y_sphere", "Target sphere", choices = spheres, selected = "socio"),
     textInput("highlight_str", "Highlight NUTS region or year", value = "BE"),
     selectInput("used_features", "Use features", choices = features$label, selected = features$label, multiple = TRUE),
-    selectInput("detrended_features", "Detrend features", choices = features$label, selected = features$label, multiple = TRUE)
+    selectInput("detrended_features", "Detrend features", choices = features$label, multiple = TRUE)
   ),
   nav_panel(
     title = "Overview",
@@ -82,9 +82,9 @@ ui <- page_navbar(
   nav_panel(
     title = "Map",
     fluidRow(
-      selectInput("selected_feature", "Select feature:", choices = features$label),
-      sliderInput("selected_year", "Select year:", min = 2012, max = 2021, value = 2021),
-      selectInput("selected_quarter", "Select quarter:", choices = c("Q1", "Q2", "Q3", "Q4"))
+      selectInput("selected_feature", "Feature:", choices = features$label),
+      sliderInput("selected_year", "Year:", min = 2012, max = 2021, value = 2021),
+      selectInput("selected_quarter", "Quarter:", choices = c("Q1", "Q2", "Q3", "Q4"))
     ),
     withSpinner(
       plotOutput("map_plt", height = "80vh")
@@ -269,7 +269,6 @@ server <- function(input, output, session) {
       ggplot() +
       geom_sf(aes(fill = value)) +
       scale_fill_viridis_c() +
-      theme_void() +
       coord_sf(
         xlim = c(2377294, 7453440),
         ylim = c(1313597, 5628510),
