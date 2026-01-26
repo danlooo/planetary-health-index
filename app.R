@@ -13,6 +13,7 @@ source("lib.R")
 
 nuts3_regions <- read_csv("data/nuts3_regions.csv")
 tar_load(cube)
+tar_load(detrended_cube)
 tar_load(features)
 withSpinner <- partial(shinycssloaders::withSpinner, color = primary_color, type = 8)
 theme_set(
@@ -39,7 +40,8 @@ ui <- page_navbar(
     radioButtons("x_sphere", "Source sphere", choices = spheres, selected = "bio"),
     radioButtons("y_sphere", "Target sphere", choices = spheres, selected = "socio"),
     textInput("highlight_str", "Highlight NUTS region or year", value = "BE"),
-    selectInput("used_features", "Use features", features$label, selected = features$label, multiple = TRUE)
+    selectInput("used_features", "Use features", choices = features$label, selected = features$label, multiple = TRUE),
+    selectInput("detrended_features", "Detrend features", choices = features$label, selected = features$label, multiple = TRUE)
   ),
   nav_panel(
     title = "Overview",
@@ -97,6 +99,39 @@ server <- function(input, output, session) {
   ) |>
     showNotification(duration = Inf, type = "warning")
 
+  observeEvent(
+    list(input$x_sphere, input$y_sphere),
+    {
+      if (input$x_sphere == input$y_sphere) {
+        showNotification("Please select different spheres!", type = "error")
+      }
+
+      features <-
+        features |>
+        filter(sphere %in% c(input$x_sphere, input$y_sphere)) |>
+        pull(label)
+
+      updateSelectInput(
+        session,
+        "used_features",
+        choices = features,
+        selected = features
+      )
+    }
+  )
+
+  observeEvent(
+    input$used_features,
+    {
+      updateSelectInput(
+        session,
+        "detrended_features",
+        choices = input$used_features,
+        selected = intersect(input$detrended_features, input$used_features)
+      )
+    }
+  )
+
   highlighted_data <- reactive(
     ~ filter(.x, str_detect(name, input$highlight_str))
   )
@@ -113,8 +148,22 @@ server <- function(input, output, session) {
       pull(var_id)
   })
 
-  cca_fwd <- reactive(calculate_cca(cube, x_features(), y_features()))
-  cca_rev <- reactive(calculate_cca(cube, y_features(), x_features()))
+  processed_cube <- reactive({
+    detrended_features <-
+      features |>
+      filter(label %in% input$used_features & label %in% input$detrended_features) |>
+      pull(var_id)
+
+    other_features <-
+      features |>
+      filter(label %in% input$used_features & !label %in% input$detrended_features) |>
+      pull(var_id)
+
+    cbind(detrended_cube[, detrended_features], cube[, other_features])
+  })
+
+  cca_fwd <- reactive(calculate_cca(processed_cube(), x_features(), y_features()))
+  cca_rev <- reactive(calculate_cca(processed_cube(), y_features(), x_features()))
 
   output$features_table <- renderTable(features)
 
@@ -184,7 +233,6 @@ server <- function(input, output, session) {
       facet_wrap(~direction) +
       labs(color = "NUTS region")
   })
-
 
 
   nuts3_sf <- get_eurostat_geospatial(

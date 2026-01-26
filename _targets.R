@@ -148,6 +148,7 @@ list(
               # re-scale
               resample_time_to_quarter() |>
               resample_space_to_nuts3(nuts3_regions, eurostat_regions) |>
+              # to space time cube
               unite("space_time", geo, TIME_PERIOD) |>
               arrange(space_time) |>
               select(var, space_time, values) |>
@@ -158,6 +159,63 @@ list(
         filter(!is.na(data)) |>
         pull(data) |>
         append(bioatmo_data) |>
+        reduce(full_join) |>
+        column_to_rownames("space_time") |>
+        mutate(across(everything(), ~ replace_na(.x, 0))) |>
+        as.matrix()
+    }
+  ),
+  tar_target(
+    name = detrended_cube,
+    command = {
+      eurostat_data |>
+        transmute(
+          code,
+          data = map2(data, code, possibly(otherwise = NA, ~ {
+            .x |>
+              # discard aggregated data
+              filter(!str_starts(geo, "EU|EA|EEA")) |> # e.g euro area
+              group_by(nut_level = nchar(geo) - 2) |>
+              nest() |>
+              arrange(-nut_level) |>
+              pull(data) |>
+              first() |>
+              # create variable
+              mutate(code = .y) |>
+              select(code, everything()) |>
+              unite(var, -any_of(setdiff(stable_columns, "code")), sep = "_") |>
+              distinct(var, geo, TIME_PERIOD, .keep_all = TRUE) |>
+              # re-scale
+              resample_time_to_quarter() |>
+              resample_space_to_nuts3(nuts3_regions, eurostat_regions) |>
+              # detrend
+              mutate(year = str_sub(TIME_PERIOD, 1, 4) |> as.integer()) |>
+              group_by(var, geo, year) |>
+              mutate(detrended_values = values - mean(values, na.rm = TRUE)) |>
+              select(-values, -year) |>
+              ungroup() |>
+              # to space time cube
+              unite("space_time", geo, TIME_PERIOD) |>
+              arrange(space_time) |>
+              select(var, space_time, detrended_values) |>
+              distinct(var, space_time, .keep_all = TRUE) |>
+              pivot_wider(names_from = var, values_from = detrended_values)
+          }))
+        ) |>
+        filter(!is.na(data)) |>
+        pull(data) |>
+        append({
+          bioatmo_data |>
+            map(~ {
+              .x |>
+                separate(space_time, into = c("geo", "TIME_PERIOD"), sep = "_") |>
+                mutate(year = str_sub(TIME_PERIOD, 1, 4) |> as.integer()) |>
+                group_by(geo, year) |>
+                mutate(across(where(is.numeric), ~ .x - mean(.x, na.rm = TRUE))) |>
+                unite("space_time", geo, TIME_PERIOD) |>
+                select(-year)
+            })
+        }) |>
         reduce(full_join) |>
         column_to_rownames("space_time") |>
         mutate(across(everything(), ~ replace_na(.x, 0))) |>
