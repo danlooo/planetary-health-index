@@ -117,6 +117,13 @@ server <- function(input, output, session) {
         choices = features,
         selected = features
       )
+
+      updateSelectInput(
+        session,
+        "selected_feature",
+        choices = features,
+        selected = features[[1]]
+      )
     }
   )
 
@@ -253,8 +260,8 @@ server <- function(input, output, session) {
     nuts3_sf |>
       left_join(
         tibble(
-          space_time = rownames(cube),
-          value = cube[, cur_feature]
+          space_time = rownames(processed_cube()),
+          value = processed_cube()[, cur_feature]
         ) |>
           separate(space_time, c("geo", "time"), sep = "_") |>
           filter(time == cur_time)
