@@ -163,5 +163,6 @@ list(
         mutate(across(everything(), ~ replace_na(.x, 0))) |>
         as.matrix()
     }
-  )
+  ),
+  tar_target(features, read_csv("data/features.csv"))
 )

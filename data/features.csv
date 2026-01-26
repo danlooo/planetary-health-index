@@ -1,0 +1,24 @@
+sphere,var_id,label,description
+atmo,ssr,SSR,Surface net short-wave (solar) radiation
+atmo,vpd,VPD,Vapour-pressure deficit
+atmo,tp,TP,Total precipitation
+atmo,sp,SP,pressure of the atmosphere at surface
+atmo,v10,v10,northward component of the wind at 10m above surface 
+atmo,u10,u10,eastward component of the wind at 10m above surface
+atmo,t2m,t2m,air temperature at 2m above surface
+bio,Day_AQUA_Mxx21x1_061_gapfilled_QCflags_dyn,water Mxx day,water Mxx day,Day water Mxx
+bio,Night_AQUA_Mxx21x1_061_gapfilled_QCflags_dyn,water Mxx night, Night water Mxx
+bio,NDWI_band7gapfilled_061_QCdyn,NDWI,Normalized Difference Water Index
+bio,NDVIgapfilled_061_QCdyn,NDVI, Normalized Difference Vegetation Index
+bio,NIRvgapfilled_061_QCdyn,NIR,Near Infrared band
+bio,NEE,NEE,Net Ecosystem Exchange
+bio,H,H
+bio,ET,ET,Evapotranspiration
+bio,ET_T,ET_T, ET_T
+bio,GPP,GPP,Gross Primary Productivity
+bio,skt,skt,Skin temperature
+socio,demo_r_d3dens,Pop density,Population density
+socio,nama_10r_3gdp,GDP,GDP
+socio,edat_lfse_04_T_ED3-8_Y25-64,Education,Population in private households with tertiary education among 25-64 year olds
+socio,lfst_r_lfu3pers_ED5-8_T_Y20-64,Employement,Unemployed persons among 20-64 year olds
+socio,nama_10_nfa_bs_S13_N21ON,Capital stock, Capital stock

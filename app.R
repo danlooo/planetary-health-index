@@ -13,6 +13,7 @@ source("lib.R")
 
 nuts3_regions <- read_csv("data/nuts3_regions.csv")
 tar_load(cube)
+tar_load(features)
 withSpinner <- partial(shinycssloaders::withSpinner, color = primary_color, type = 8)
 theme_set(
   theme_classic(base_size = 18) + theme(
@@ -115,7 +116,7 @@ server <- function(input, output, session) {
   cca_fwd <- reactive(calculate_cca(cube, x_features(), y_features()))
   cca_rev <- reactive(calculate_cca(cube, y_features(), x_features()))
 
-  output$features_table <- renderTable(features |> select(sphere, var_id, label))
+  output$features_table <- renderTable(features)
 
   output$scores_plt <- renderPlot(
     bg = "transparent",

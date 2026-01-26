@@ -10,3 +10,9 @@ Planetary Health Index (PHI) descibes the state of a region at a given time usin
 ## Issues
 
 - regular data cube assumes no NA. This depends on the selected variables.
+
+## Notes
+
+## processing depends on question to be answered
+- trend is signal and not noise in analyzing long term co-evolution
+- extensive features like population cound must be added up during regional aggregtion while intensive features like GDP per capita must be averaged
