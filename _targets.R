@@ -161,6 +161,8 @@ list(
         append(bioatmo_data) |>
         reduce(full_join) |>
         column_to_rownames("space_time") |>
+        # z score scaling
+        mutate(across(where(is.numeric), scale)) |>
         mutate(across(everything(), ~ replace_na(.x, 0))) |>
         as.matrix()
     }
@@ -218,6 +220,8 @@ list(
         }) |>
         reduce(full_join) |>
         column_to_rownames("space_time") |>
+        # z score scaling
+        mutate(across(where(is.numeric), scale)) |>
         mutate(across(everything(), ~ replace_na(.x, 0))) |>
         as.matrix()
     }
