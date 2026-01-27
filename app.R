@@ -244,7 +244,7 @@ server <- function(input, output, session) {
 
   nuts3_sf <- get_eurostat_geospatial(
     output_class = "sf",
-    resolution = "60",
+    resolution = "20",
     nuts_level = "3"
   )
 
