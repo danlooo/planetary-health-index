@@ -121,8 +121,8 @@ server <- function(input, output, session) {
       updateSelectInput(
         session,
         "selected_feature",
-        choices = features,
-        selected = features[[1]]
+        choices = c("fwd_CCA1", "rev_CCA1", "fwd_CCA2", "rev_CCA2") |> append(features),
+        selected = "fwd_CCA1"
       )
     }
   )
@@ -249,23 +249,36 @@ server <- function(input, output, session) {
   )
 
   output$map_plt <- renderPlot({
-    cur_feature <-
-      features |>
-      filter(label == input$selected_feature) |>
-      pull(var_id) |>
-      first()
-
     cur_time <- paste0(input$selected_year, "-", input$selected_quarter)
 
-    nuts3_sf |>
-      left_join(
+    # get data: either feature or CCA scores
+    if (input$selected_feature %in% features$label) {
+      cur_feature <-
+        features |>
+        filter(label == input$selected_feature) |>
+        pull(var_id) |>
+        first()
+
+      cur_data <-
         tibble(
           space_time = rownames(processed_cube()),
           value = processed_cube()[, cur_feature]
         ) |>
-          separate(space_time, c("geo", "time"), sep = "_") |>
-          filter(time == cur_time)
-      ) |>
+        separate(space_time, c("geo", "time"), sep = "_") |>
+        filter(time == cur_time)
+    } else {
+      cur_data <-
+        inner_join(
+          cca_fwd()$scores |> select(fwd_CCA1 = CCA1, fwd_CCA2 = CCA2, geo, time),
+          cca_rev()$scores |> select(rev_CCA1 = CCA1, rev_CCA2 = CCA2, geo, time)
+        ) |>
+        filter(time == cur_time) |>
+        pivot_longer(cols = -c(geo, time), names_to = "feature", values_to = "value") |>
+        filter(feature == input$selected_feature)
+    }
+
+    nuts3_sf |>
+      left_join(cur_data) |>
       ggplot() +
       geom_sf(aes(fill = value)) +
       scale_fill_viridis_c() +
