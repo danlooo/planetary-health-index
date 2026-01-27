@@ -1,7 +1,7 @@
 # Planetary Health Index
 
-Planetary Health Index (PHI) descibes the state of a region at a given time using three sets of features: biosphere, atmosphere, and sociosphere.
-Canonical Correlation Analysis (CCA) is used to describe teh relationship between a given pair of those feature sets.
+Planetary Health Index (PHI) describes the state of a region at a given time using three sets of features: biosphere, atmosphere, and sociosphere.
+Canonical Correlation Analysis (CCA) is used to describe the relationship between a given pair of those feature sets.
 
 ## Get Started
 
@@ -15,7 +15,13 @@ docker build -t danlooo/planetary-health-index .
 docker run -p 80:80 danlooo/planetary-health-index
 ```
 
-The locsl dashboard will be available at [http://localhost/](http://localhost/).
+The local dashboard will be available at [http://localhost/](http://localhost/).
+
+## Development
+
+This app is a Docker container with an R targets workflow that is triggered on `docker build`.
+Targets were used in the dashboard written in R shiny.
+The container provides the environment for targets, shiny, and VSCode devconatiner.
 
 ## Funding
 
@@ -29,5 +35,5 @@ The locsl dashboard will be available at [http://localhost/](http://localhost/).
 </a>
 </p>
 
-This project has received funding from the [Open-Earth-Monitor Cyberinfrastructure](https://earthmonitor.org/) project that is part of European Union's Horizon Europe research and innovation programme under grant [101059548](https://cordis.europa.eu/project/id/101059548).
+This project has received funding from the [Open-Earth-Monitor Cyberinfrastructure](https://earthmonitor.org/) project that is part of the European Union's Horizon Europe research and innovation program under grant [101059548](https://cordis.europa.eu/project/id/101059548).
 This project is also a collaboration with the European Central Bank.
