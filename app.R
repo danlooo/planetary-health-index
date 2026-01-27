@@ -167,12 +167,14 @@ server <- function(input, output, session) {
       pull(var_id)
 
     cbind(detrended_cube[, detrended_features], cube[, other_features])
-  })
+  }) |> bindCache(input$used_features, input$detrended_features)
 
-  cca_fwd <- reactive(calculate_cca(processed_cube(), x_features(), y_features()))
-  cca_rev <- reactive(calculate_cca(processed_cube(), y_features(), x_features()))
+  cca_fwd <- reactive(calculate_cca(processed_cube(), x_features(), y_features())) |>
+    bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features)
+  cca_rev <- reactive(calculate_cca(processed_cube(), y_features(), x_features())) |>
+    bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features)
 
-  output$features_table <- renderTable(features)
+  output$features_table <- renderTable(features) |> bindCache(1)
 
   output$scores_plt <- renderPlot(
     bg = "transparent",
@@ -200,7 +202,7 @@ server <- function(input, output, session) {
         guides(fill = "none") +
         labs(x = paste0(input$x_sphere, "-", input$y_sphere), y = paste0(input$y_sphere, "-", input$x_sphere))
     }
-  )
+  ) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str) 
 
   output$loadings_plt <- renderPlot({
     bind_rows(
@@ -213,7 +215,7 @@ server <- function(input, output, session) {
       geom_hline(yintercept = 0) +
       coord_flip() +
       labs(x = "Feature")
-  })
+}) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str)
 
   output$trajectories_plt <- renderPlot({
     bind_rows(
@@ -239,7 +241,10 @@ server <- function(input, output, session) {
       coord_fixed() +
       facet_wrap(~direction) +
       labs(color = "NUTS region")
-  })
+  }) |> bindCache(
+    input$x_sphere, input$y_sphere, input$used_features, input$detrended_features,
+    input$highlight_str , input$highlight_str
+  )
 
 
   nuts3_sf <- get_eurostat_geospatial(
