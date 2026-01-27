@@ -274,6 +274,11 @@ server <- function(input, output, session) {
         ylim = c(1313597, 5628510),
         crs = 3035
       ) +
+      theme(
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank()
+      ) +
       labs(fill = input$selected_feature)
   })
 }
