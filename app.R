@@ -39,60 +39,77 @@ ui <- page_navbar(
     fg = "black",
     bg = "white"
   ),
-  sidebar = sidebar(
-    radioButtons("x_sphere", "Source sphere", choices = spheres, selected = "bio"),
-    radioButtons("y_sphere", "Target sphere", choices = spheres, selected = "socio"),
-    textInput("highlight_str", "Highlight NUTS region or year", value = "BE"),
-    selectInput("used_features", "Use features", choices = features$label, selected = features$label, multiple = TRUE),
-    selectInput("detrended_features", "Detrend features", choices = features$label, multiple = TRUE)
+  tags$head(
+    tags$style(HTML("
+      h3 {
+        color: #006c66
+      }
+      .tab-content.html-fill-container, .navbar-header {
+        padding-left: 1.5em;
+        padding-right: 1.5em;
+      }
+    "))
   ),
   nav_panel(
-    title = "Overview",
+    title = "Input",
     div(paste0(
       "The Planetary Health Index φ is a concept to explain linear relationships of a set of features or spheres using another one, ",
       "e.g., to model socioeconomic features using biological measurements. Hereby, Canonical Correlation Analysis is used ",
       "to model a set of related features holistically, whereas traditional Pearson Correlation focuses on the relationship ",
       "between two individual features. Data was collected from Eurostat, ERA5, and FluxCom."
     )),
+    h3("Input"),
+    fluidRow(
+      radioButtons(
+        "x_sphere", "Source sphere",
+        choices = spheres, selected = "bio"
+      ),
+      radioButtons(
+        "y_sphere", "Target sphere",
+        choices = spheres, selected = "socio"
+      ),
+      selectInput(
+        "used_features", "Use features",
+        choices = features$label, selected = features$label, multiple = TRUE
+      ),
+      selectInput(
+        "detrended_features", "Detrend features",
+        choices = features$label, multiple = TRUE
+      )
+    ),
     h3("Features"),
     tableOutput("features_table")
   ),
   nav_panel(
-    title = "Plot",
-    div(paste0(
-      "One feature sphere is used to predict another one, and vice versa. ",
-      "Each point represents the first CCA component of a NUTS3 region at a given quarter. ",
-      "Many points close to the grey identity line indicate that the feature spheres are highly linearly related.",
-      "Each bar represents the importance of that feature in the CCA."
-    )),
-    withSpinner(
-      plotOutput("scores_plt", height = "60vh")
+    title = "Output",
+    h3("Sphere relationships"),
+    fluidRow(
+      textInput(
+        "highlight_str", "Highlight NUTS region or year",
+        value = "BE"
+      )
     ),
-    withSpinner(
-      plotOutput("loadings_plt", height = "20vh")
-    )
-  ),
-  nav_panel(
-    title = "Trajectories",
-    div(paste0(
-      "One feature sphere is used to predict another one, and vice versa. ",
-      "Each point represents the first and second CCA component of a NUTS3 region at a given quarter. "
-    )),
-    withSpinner(
-      plotOutput("trajectories_plt", height = "80vh")
-    )
-  ),
-  nav_panel(
-    title = "Map",
+    fluidRow(
+      splitLayout(
+        cellWidths = c("50%", "50%"),
+        withSpinner(plotOutput("scores_plt")),
+        withSpinner(plotOutput("trajectories_plt"))
+      )
+    ),
+    fluidRow(
+      withSpinner(plotOutput("loadings_plt"))
+    ),
+    h3("Spatial distribution"),
     fluidRow(
       selectInput("selected_feature", "Feature:", choices = features$label),
       sliderInput("selected_year", "Year:", min = 2012, max = 2021, value = 2021),
       selectInput("selected_quarter", "Quarter:", choices = c("Q1", "Q2", "Q3", "Q4"))
     ),
-    withSpinner(
-      plotOutput("map_plt", height = "80vh")
-    )
-  ),
+    withSpinner(plotOutput("map_plt", height = "1000px")),
+    h3("Temporal distribution"),
+    selectInput("selected_geo", "Region:", choices = nuts3_regions$geo3),
+    withSpinner(plotOutput("timeseries_plt")),
+  )
 )
 
 server <- function(input, output, session) {
@@ -231,16 +248,18 @@ server <- function(input, output, session) {
       scale_fill_grey(start = 1, end = 0) +
       geom_line(
         data = highlighted_data(),
-        mapping = aes(color = geo),
+        mapping = aes(group = geo),
+        color = dark_gray_color
       ) +
       geom_density_2d(
         data = highlighted_data(),
         color = primary_color
       ) +
-      geom_density_2d(color = "#333333") +
+      geom_density_2d(color = dark_gray_color) +
       scale_color_hue(l = 40) +
       coord_fixed() +
       facet_wrap(~direction) +
+      guides(fill = "none") +
       labs(color = "NUTS region")
   }) |> bindCache(
     input$x_sphere, input$y_sphere, input$used_features, input$detrended_features,
@@ -304,6 +323,32 @@ server <- function(input, output, session) {
         axis.ticks = element_blank()
       ) +
       labs(fill = input$selected_feature)
+  })
+
+  output$timeseries_plt <- renderPlot({
+    cur_feature_data <-
+      processed_cube() |>
+      as_tibble(rownames = "space_time") |>
+      separate(space_time, c("geo", "time"), sep = "_") |>
+      filter(geo == input$selected_geo) |>
+      pivot_longer(-c(geo, time), names_to = "feature", values_to = "value")
+
+    cur_cca_data <-
+      inner_join(
+        cca_fwd()$scores |> select(fwd_CCA1 = CCA1, fwd_CCA2 = CCA2, geo, time),
+        cca_rev()$scores |> select(rev_CCA1 = CCA1, rev_CCA2 = CCA2, geo, time)
+      ) |>
+      filter(geo == input$selected_geo) |>
+      pivot_longer(cols = -c(geo, time), names_to = "feature", values_to = "value")
+
+    cur_data <-
+      bind_rows(cur_feature_data, cur_cca_data) |>
+      mutate(time = yq(time))
+
+    cur_data |>
+      ggplot(aes(time, value, color = feature)) +
+      geom_line() +
+      scale_color_hue(l = 40)
   })
 }
 
