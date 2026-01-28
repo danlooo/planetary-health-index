@@ -11,6 +11,8 @@ selected_codes <- c(
 
 sphere_colors <- c("atmo" = "#87CEEB", "bio" = "#228B22", "socio" = "#808080")
 primary_color <- "#006c66"
+light_gray_color <- "#a4a4a4"
+dark_gray_color <- "#464646"
 spheres <- names(sphere_colors)
 
 write_nc_tibble <- function(data, nc_path) {

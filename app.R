@@ -8,6 +8,8 @@ library(shinycssloaders)
 library(ncdf4)
 library(lubridate)
 library(eurostat)
+library(rnaturalearth)
+library(khroma)
 
 source("lib.R")
 
@@ -255,6 +257,10 @@ server <- function(input, output, session) {
     nuts_level = "3"
   )
 
+  # Load land and ocean data
+  ocean_sf <- ne_download(scale = 50, type = "ocean", category = "physical", returnclass = "sf")
+  land_sf <- ne_countries(scale = "medium", returnclass = "sf")
+
   output$map_plt <- renderPlot({
     cur_time <- paste0(input$selected_year, "-", input$selected_quarter)
 
@@ -287,8 +293,9 @@ server <- function(input, output, session) {
     nuts3_sf |>
       left_join(cur_data) |>
       ggplot() +
-      geom_sf(aes(fill = value)) +
-      scale_fill_viridis_c() +
+      geom_sf(data = land_sf, fill = light_gray_color, color = light_gray_color) +  
+      geom_sf(aes(fill = value), color = dark_gray_color) +
+      scale_fill_gradientn(colours = color("vik")(10), na.value=light_gray_color) +
       coord_sf(
         xlim = c(2377294, 7453440),
         ylim = c(1313597, 5628510),

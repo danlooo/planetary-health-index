@@ -3,6 +3,22 @@
 options(repos = c(CRAN = "https://packagemanager.rstudio.com/all/__linux__/jammy/latest"))
 
 install.packages(c(
-    "shiny", "plotly", "ggsci", "ggnewscale", "bslib", "RNetCDF", "giscoR", "httr2", "sf",
-    "targets", "shinycssloaders", "ncdf4", "crew", "eurostat", "rrcov3way", "languageserver"
+    "bslib",
+    "crew",
+    "eurostat",
+    "ggnewscale",
+    "ggsci",
+    "giscoR",
+    "httr2",
+    "languageserver",
+    "ncdf4",
+    "plotly",
+    "rnaturalearth",
+    "rnaturalearthdata",
+    "RNetCDF",
+    "rrcov3way",
+    "sf",
+    "shiny",
+    "shinycssloaders",
+    "targets"
 ))
