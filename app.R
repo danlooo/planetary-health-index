@@ -11,6 +11,8 @@ library(eurostat)
 
 source("lib.R")
 
+shinyOptions(cache = cachem::cache_mem(max_size = 1e9))
+
 nuts3_regions <- read_csv("data/nuts3_regions.csv")
 tar_load(cube)
 tar_load(detrended_cube)
