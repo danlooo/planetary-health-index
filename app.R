@@ -10,7 +10,6 @@ library(lubridate)
 library(eurostat)
 library(rnaturalearth)
 library(khroma)
-
 source("lib.R")
 
 shinyOptions(cache = cachem::cache_mem(max_size = 1e9))
@@ -189,8 +188,9 @@ server <- function(input, output, session) {
       ) |>
         unite("name", geo, time) |>
         ggplot(aes(fwd, rev)) +
-        geom_abline(color = "darkgrey") +
-        geom_point(color = "darkgrey", alpha = 0.03) +
+        geom_density2d_filled() +
+        scale_fill_grey(start = 1, end = 0, t) +
+        geom_abline(color = dark_gray_color) +
         geom_point(
           data = highlighted_data(),
           color = primary_color,
@@ -201,12 +201,11 @@ server <- function(input, output, session) {
           data = highlighted_data(),
           color = primary_color
         ) +
-        geom_density_2d(color = "#333333") +
         coord_fixed() +
         guides(fill = "none") +
         labs(x = paste0(input$x_sphere, "-", input$y_sphere), y = paste0(input$y_sphere, "-", input$x_sphere))
     }
-  ) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str) 
+  ) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str)
 
   output$loadings_plt <- renderPlot({
     bind_rows(
@@ -219,7 +218,7 @@ server <- function(input, output, session) {
       geom_hline(yintercept = 0) +
       coord_flip() +
       labs(x = "Feature")
-}) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str)
+  }) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str)
 
   output$trajectories_plt <- renderPlot({
     bind_rows(
@@ -228,10 +227,8 @@ server <- function(input, output, session) {
     ) |>
       mutate(name = paste0(geo, time)) |>
       ggplot(aes(CCA1, CCA2)) +
-      geom_point(
-        color = "darkgrey",
-        alpha = 0.03
-      ) +
+      geom_density2d_filled() +
+      scale_fill_grey(start = 1, end = 0) +
       geom_line(
         data = highlighted_data(),
         mapping = aes(color = geo),
@@ -247,7 +244,7 @@ server <- function(input, output, session) {
       labs(color = "NUTS region")
   }) |> bindCache(
     input$x_sphere, input$y_sphere, input$used_features, input$detrended_features,
-    input$highlight_str , input$highlight_str
+    input$highlight_str, input$highlight_str
   )
 
 
@@ -293,9 +290,9 @@ server <- function(input, output, session) {
     nuts3_sf |>
       left_join(cur_data) |>
       ggplot() +
-      geom_sf(data = land_sf, fill = light_gray_color, color = light_gray_color) +  
+      geom_sf(data = land_sf, fill = light_gray_color, color = light_gray_color) +
       geom_sf(aes(fill = value), color = dark_gray_color) +
-      scale_fill_gradientn(colours = color("vik")(10), na.value=light_gray_color) +
+      scale_fill_gradientn(colours = color("vik")(10), na.value = light_gray_color) +
       coord_sf(
         xlim = c(2377294, 7453440),
         ylim = c(1313597, 5628510),
