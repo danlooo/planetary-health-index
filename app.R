@@ -15,6 +15,13 @@ source("lib.R")
 shinyOptions(cache = cachem::cache_mem(max_size = 1e9))
 
 nuts3_regions <- read_csv("data/nuts3_regions.csv")
+
+nuts3_sf <- get_eurostat_geospatial(
+  output_class = "sf",
+  resolution = "20",
+  nuts_level = "3"
+)
+
 tar_load(cube)
 tar_load(detrended_cube)
 tar_load(features)
@@ -264,13 +271,6 @@ server <- function(input, output, session) {
   }) |> bindCache(
     input$x_sphere, input$y_sphere, input$used_features, input$detrended_features,
     input$highlight_str, input$highlight_str
-  )
-
-
-  nuts3_sf <- get_eurostat_geospatial(
-    output_class = "sf",
-    resolution = "20",
-    nuts_level = "3"
   )
 
   # Load land and ocean data
