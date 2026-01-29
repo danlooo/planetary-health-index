@@ -133,6 +133,8 @@ list(
           code,
           data = map2(data, code, possibly(otherwise = NA, ~ {
             .x |>
+              # crop to time range of bioatmo data
+              filter("2001-01-01" <= TIME_PERIOD & TIME_PERIOD <= "2021-12-31") |>
               # discard aggregated data
               filter(!str_starts(geo, "EU|EA|EEA")) |> # e.g euro area
               group_by(nut_level = nchar(geo) - 2) |>
@@ -175,6 +177,8 @@ list(
           code,
           data = map2(data, code, possibly(otherwise = NA, ~ {
             .x |>
+              # crop to time range of bioatmo data
+              filter("2001-01-01" <= TIME_PERIOD & TIME_PERIOD <= "2021-12-31") |>
               # discard aggregated data
               filter(!str_starts(geo, "EU|EA|EEA")) |> # e.g euro area
               group_by(nut_level = nchar(geo) - 2) |>

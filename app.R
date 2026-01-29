@@ -109,7 +109,7 @@ ui <- page_navbar(
     h3("Spatial distribution"),
     fluidRow(
       selectInput("selected_feature", "Feature:", choices = features$label),
-      sliderInput("selected_year", "Year:", min = 2012, max = 2021, value = 2021),
+      sliderInput("selected_year", "Year:", min = 2001, max = 2021, value = 2021),
       selectInput("selected_quarter", "Quarter:", choices = c("Q1", "Q2", "Q3", "Q4"))
     ),
     withSpinner(plotOutput("map_plt", height = "1000px")),
