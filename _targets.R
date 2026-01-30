@@ -24,11 +24,12 @@ list(
   tar_target(n_expected_rows, length(regions) * length(times)),
   tar_target(max_na_frac, 0.1),
   tar_target(space_times, expand_grid(space = regions, time = times) |> unite("space_time", everything()) |> pull(space_time)),
+  tar_target(features_csv, read_csv("data/features.csv")),
   tar_target(
     name = features,
     command = {
       tibble(var_id = colnames(raw_cube)) |>
-      left_join(read_csv("data/features.csv")) |>
+      left_join(features_csv) |>
       mutate(
         sphere = replace_na(sphere, "socio"),
         label = ifelse(is.na(label), var_id, label),
@@ -195,7 +196,9 @@ list(
     name = cube,
     command = {
       raw_cube |>
-        #z score scaling
+        # handle power law distributed vars like GDP
+        mutate(across(starts_with("nama_"), log)) |>
+        # z score scaling
         mutate(across(where(is.numeric), scale)) |>
         mutate(across(everything(), ~ replace_na(.x, 0))) |>
         as.matrix()
@@ -206,17 +209,23 @@ list(
     command = {
       raw_cube |>
       as_tibble(rownames = "space_time") |>
-      pivot_longer(-space_time, names_to = "var_id") |>
+      pivot_longer(-space_time, names_to = "var_id", values_to="pre_value") |>
       separate(space_time, c("geo", "year", "quarter")) |>
       # detrend
       group_by(var_id, geo, year) |>
-      mutate(value = value - mean(value)) |>
+      mutate(value = pre_value - mean(pre_value, na.rm=TRUE)) |>
+      group_by(var_id, geo, quarter) |>
+      mutate(value = pre_value - mean(pre_value, na.rm=TRUE)) |>        
+      select(-pre_value) |>
       ungroup() |>
       # pivot to matrix
       transmute(space_time = paste0(geo, "_", year , "-", quarter), var_id, value) |>
       pivot_wider(names_from = var_id, values_from = value) |>
       column_to_rownames("space_time") |>
-      #z score scaling
+      # handle power law distributed vars like GDP
+      # mutate(across(starts_with("nama_"), log)) |>
+      # mutate(across(everything(), ~ ifelse(is.infinite(.x), NA, .x))) |>
+      # z score scaling
       mutate(across(where(is.numeric), scale)) |>
       mutate(across(everything(), ~ replace_na(.x, 0)))
     }

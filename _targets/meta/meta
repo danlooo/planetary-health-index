@@ -56,8 +56,9 @@ n_expected_rows|stem|9d878d526cf6f211|20486c49d293d4df|95d932a5b5794bbd|43498857
 max_na_frac|stem|0caef0b07b2bd4ff|a7fde5bc869817bc|2c530c1562a7fbd1|1968109481||t20483.5078355036s|s53b|53|rds|local|vector|||0.708||
 space_times|stem|0f21abc051e726dc|1a918fd0b3d4a62b|95d932a5b5794bbd|525720312||t20483.512923912s|s256211b|256211|rds|local|vector|||0.037||
 raw_cube|stem|f58318f61987a016|8508c0c4904131db|5a95f52b17ba9c94|647556434||t20483.5133132504s|s17787169b|17787169|rds|local|vector|||28.711|There were 22 warnings in `transmute()`. The first warning was: ℹ In argument: `data = map2(...)`. Caused by warning in `left_join()`: ! Detected an unexpected many-to-many relationship between `x` and `y`. ℹ Row 1 of `x` matches multiple rows in `y`. ℹ Row 133 of `y` matches multiple rows in `x`. ℹ If a many-to-many relationship is expected, set `relationship =   'many-to-many'` to silence this warning. ℹ Run `dplyr::last_dplyr_warnings()` to see the 21 remaining warnings.|
-cube|stem|af9d13de2a073d75|286ae1f3e42c7fe2|67a3b3edcb68692b|-465492006||t20483.5133424974s|s19019265b|19019265|rds|local|vector|||0.093||
-detrended_cube|stem|e1b74c35287cc47d|12f39166d72c38a7|67a3b3edcb68692b|86121086||t20483.5252870958s|s17310087b|17310087|rds|local|vector|||35.235||
+features_csv|stem|fd8ec1dcaa710d12|5c2312a0c8251d11|2c530c1562a7fbd1|-2077478744||t20483.5536726118s|s1004b|1004|rds|local|vector|||0.842|One or more parsing issues, call `problems()` on your data frame for details, e.g.:   dat <- vroom(...)   problems(dat)|
+features|stem|1a14ff9e9c99f69f|c908f223ab15e6e0|f1604241a0774798|-477244766||t20483.5536750257s|s754b|754|rds|local|vector|||0.019||
+cube|stem|aa72b51a5be6d079|e688a7eedace8297|67a3b3edcb68692b|-465492006||t20483.5610350221s|s18647172b|18647172|rds|local|vector|||0.556|There were 3 warnings in `mutate()`. The first warning was: ℹ In argument: `across(starts_with('nama_'), log)`. Caused by warning: ! NaNs produced ℹ Run `dplyr::last_dplyr_warnings()` to see the 2 remaining warnings.|
 calculate_cca|function|312d1381db8fc24b
 primary_color|object|092a5f65d4b3906d
 resample_space_to_nuts3|function|dca19a4479ae4a50
@@ -70,4 +71,4 @@ resample_time_to_quarter|function|88c41afa09c0b828
 light_gray_color|object|85009bc8ac4df8e9
 write_nc_tibble|function|8e3cf56968bf7460
 sphere_colors|object|1b3c78ef062c343b
-features|stem|5500411276edfba7|41dabad1957281b5|67a3b3edcb68692b|-477244766||t20483.5302394018s|s724b|724|rds|local|vector|||0.111|One or more parsing issues, call `problems()` on your data frame for details, e.g.:   dat <- vroom(...)   problems(dat)|
+detrended_cube|stem|ef09477e3fb46309|121fdeb74e3122bf|67a3b3edcb68692b|86121086||t20483.6194734033s|s19254864b|19254864|rds|local|vector|||35.979||
