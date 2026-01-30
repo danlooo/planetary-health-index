@@ -98,7 +98,7 @@ ui <- page_navbar(
     ),
     fluidRow(
       splitLayout(
-        cellWidths = c("50%", "50%"),
+        cellWidths = c("33%", "66%"),
         withSpinner(plotOutput("scores_plt")),
         withSpinner(plotOutput("trajectories_plt"))
       )
@@ -201,7 +201,7 @@ server <- function(input, output, session) {
   cca_rev <- reactive(calculate_cca(processed_cube(), y_features(), x_features())) |>
     bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features)
 
-  output$features_table <- renderTable(features) |> bindCache(1)
+  output$features_table <- features |> select(-var_id) |> renderTable() |> bindCache(1)
 
   output$scores_plt <- renderPlot(
     bg = "transparent",

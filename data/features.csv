@@ -6,8 +6,8 @@ atmo,sp,SP,pressure of the atmosphere at surface
 atmo,v10,v10,northward component of the wind at 10m above surface 
 atmo,u10,u10,eastward component of the wind at 10m above surface
 atmo,t2m,t2m,air temperature at 2m above surface
-bio,Day_AQUA_Mxx21x1_061_gapfilled_QCflags_dyn,water Mxx day,water Mxx day,Day water Mxx
-bio,Night_AQUA_Mxx21x1_061_gapfilled_QCflags_dyn,water Mxx night, Night water Mxx
+bio,Day_AQUA_Mxx21x1_061_gapfilled_QCflags_dyn,LST day,  Land surface temperature at day
+bio,Night_AQUA_Mxx21x1_061_gapfilled_QCflags_dyn,LST night, Land surface temperature at night
 bio,NDWI_band7gapfilled_061_QCdyn,NDWI,Normalized Difference Water Index
 bio,NDVIgapfilled_061_QCdyn,NDVI, Normalized Difference Vegetation Index
 bio,NIRvgapfilled_061_QCdyn,NIR,Near Infrared band

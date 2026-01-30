@@ -1,3 +1,5 @@
+set.seed(1337)
+
 stable_columns <- c("code", "freq", "unit", "geo", "TIME_PERIOD", "values")
 
 selected_codes <- c(
@@ -14,6 +16,7 @@ primary_color <- "#006c66"
 light_gray_color <- "#a4a4a4"
 dark_gray_color <- "#464646"
 spheres <- names(sphere_colors)
+
 
 write_nc_tibble <- function(data, nc_path) {
   # uniform dimension with same shape of other cubes

@@ -13,14 +13,29 @@ library(rrcov3way)
 
 source("lib.R")
 
-set.seed(1337)
-
 tar_option_set(
   controller = crew_controller_local(workers = 1),
   error = "continue"
 )
 
 list(
+  tar_target(times, read_lines("data/quarters.txt")),
+  tar_target(regions, read_lines("data/geo3.txt")),
+  tar_target(n_expected_rows, length(regions) * length(times)),
+  tar_target(max_na_frac, 0.1),
+  tar_target(space_times, expand_grid(space = regions, time = times) |> unite("space_time", everything()) |> pull(space_time)),
+  tar_target(
+    name = features,
+    command = {
+      tibble(var_id = colnames(raw_cube)) |>
+      left_join(read_csv("data/features.csv")) |>
+      mutate(
+        sphere = replace_na(sphere, "socio"),
+        label = ifelse(is.na(label), var_id, label),
+        description = ifelse(is.na(description), label, description),
+      ) |>
+      arrange(sphere, var_id)
+  }),
   tar_target(
     name = eurostat_datasets,
     command = {
@@ -126,15 +141,14 @@ list(
     }
   ),
   tar_target(
-    name = cube,
+    name = raw_cube,
     command = {
       eurostat_data |>
         transmute(
           code,
           data = map2(data, code, possibly(otherwise = NA, ~ {
-            .x |>
-              # crop to time range of bioatmo data
-              filter("2001-01-01" <= TIME_PERIOD & TIME_PERIOD <= "2021-12-31") |>
+            res <- 
+              .x |>
               # discard aggregated data
               filter(!str_starts(geo, "EU|EA|EEA")) |> # e.g euro area
               group_by(nut_level = nchar(geo) - 2) |>
@@ -150,20 +164,38 @@ list(
               # re-scale
               resample_time_to_quarter() |>
               resample_space_to_nuts3(nuts3_regions, eurostat_regions) |>
+              # crop to bioatmo range
+              filter(TIME_PERIOD %in% times & geo %in% regions) |>
               # to space time cube
               unite("space_time", geo, TIME_PERIOD) |>
               arrange(space_time) |>
               select(var, space_time, values) |>
               distinct(var, space_time, .keep_all = TRUE) |>
-              pivot_wider(names_from = var, values_from = values)
+              pivot_wider(names_from = var, values_from = values) |>
+              complete(space_time = space_times)
+
+            abundant_features <-
+              res |>
+              summarise(across(where(is.numeric), ~sum(is.na(.x)))) |>
+              pivot_longer(everything()) |>
+              filter(value <= max_na_frac * n_expected_rows) |>
+              pull(name)
+
+            res[c("space_time", abundant_features)]
           }))
         ) |>
         filter(!is.na(data)) |>
         pull(data) |>
         append(bioatmo_data) |>
         reduce(full_join) |>
-        column_to_rownames("space_time") |>
-        # z score scaling
+        column_to_rownames("space_time")
+    }
+  ),
+  tar_target(
+    name = cube,
+    command = {
+      raw_cube |>
+        #z score scaling
         mutate(across(where(is.numeric), scale)) |>
         mutate(across(everything(), ~ replace_na(.x, 0))) |>
         as.matrix()
@@ -172,63 +204,21 @@ list(
   tar_target(
     name = detrended_cube,
     command = {
-      eurostat_data |>
-        transmute(
-          code,
-          data = map2(data, code, possibly(otherwise = NA, ~ {
-            .x |>
-              # crop to time range of bioatmo data
-              filter("2001-01-01" <= TIME_PERIOD & TIME_PERIOD <= "2021-12-31") |>
-              # discard aggregated data
-              filter(!str_starts(geo, "EU|EA|EEA")) |> # e.g euro area
-              group_by(nut_level = nchar(geo) - 2) |>
-              nest() |>
-              arrange(-nut_level) |>
-              pull(data) |>
-              first() |>
-              # create variable
-              mutate(code = .y) |>
-              select(code, everything()) |>
-              unite(var, -any_of(setdiff(stable_columns, "code")), sep = "_") |>
-              distinct(var, geo, TIME_PERIOD, .keep_all = TRUE) |>
-              # re-scale
-              resample_time_to_quarter() |>
-              resample_space_to_nuts3(nuts3_regions, eurostat_regions) |>
-              # detrend
-              mutate(year = str_sub(TIME_PERIOD, 1, 4) |> as.integer()) |>
-              group_by(var, geo, year) |>
-              mutate(detrended_values = values - mean(values, na.rm = TRUE)) |>
-              select(-values, -year) |>
-              ungroup() |>
-              # to space time cube
-              unite("space_time", geo, TIME_PERIOD) |>
-              arrange(space_time) |>
-              select(var, space_time, detrended_values) |>
-              distinct(var, space_time, .keep_all = TRUE) |>
-              pivot_wider(names_from = var, values_from = detrended_values)
-          }))
-        ) |>
-        filter(!is.na(data)) |>
-        pull(data) |>
-        append({
-          bioatmo_data |>
-            map(~ {
-              .x |>
-                separate(space_time, into = c("geo", "TIME_PERIOD"), sep = "_") |>
-                mutate(year = str_sub(TIME_PERIOD, 1, 4) |> as.integer()) |>
-                group_by(geo, year) |>
-                mutate(across(where(is.numeric), ~ .x - mean(.x, na.rm = TRUE))) |>
-                unite("space_time", geo, TIME_PERIOD) |>
-                select(-year)
-            })
-        }) |>
-        reduce(full_join) |>
-        column_to_rownames("space_time") |>
-        # z score scaling
-        mutate(across(where(is.numeric), scale)) |>
-        mutate(across(everything(), ~ replace_na(.x, 0))) |>
-        as.matrix()
+      raw_cube |>
+      as_tibble(rownames = "space_time") |>
+      pivot_longer(-space_time, names_to = "var_id") |>
+      separate(space_time, c("geo", "year", "quarter")) |>
+      # detrend
+      group_by(var_id, geo, year) |>
+      mutate(value = value - mean(value)) |>
+      ungroup() |>
+      # pivot to matrix
+      transmute(space_time = paste0(geo, "_", year , "-", quarter), var_id, value) |>
+      pivot_wider(names_from = var_id, values_from = value) |>
+      column_to_rownames("space_time") |>
+      #z score scaling
+      mutate(across(where(is.numeric), scale)) |>
+      mutate(across(everything(), ~ replace_na(.x, 0)))
     }
-  ),
-  tar_target(features, read_csv("data/features.csv"))
+  )
 )

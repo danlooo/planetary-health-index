@@ -18,7 +18,6 @@ eurostat_cube|stem|db5aa64adb5bc21c|f2f6ddc1a2010ed6|2085d436b74d758a|160526663|
 read_nc_feature_bioatmo|function|378456060a8e4e0f
 read_nc_feature_socio|function|5a2d327d27b3757f
 calculate_ccas|function|f1b6d63a642e1825
-features|stem|8d13259271d94634|5c2312a0c8251d11|2c530c1562a7fbd1|-477244766||t20479.4294097222s|s968b|968|rds|local|vector|||0.758|One or more parsing issues, call `problems()` on your data frame for details, e.g.:   dat <- vroom(...)   problems(dat)|
 eurostat_datasets|stem|e415e74a38d9f524|0f15ac55cdcfb056|b3fb488fe75d7c37|-170642636||t20475.6174884259s|s967b|967|rds|local|vector||eurostat_datasets_1d884f49b41c08ef*eurostat_datasets_f5cca3750631c0ba*eurostat_datasets_5f691c3220808811*eurostat_datasets_39aa349fbd83618e*eurostat_datasets_c2477cac06a7355c*eurostat_datasets_a241c9a80e6361c5*eurostat_datasets_cb47dc7cee81b1fd*eurostat_datasets_63aca7da7695e428*eurostat_datasets_9e693698399b6d75*eurostat_datasets_cb568963464a40e4*eurostat_datasets_55c2d5bd1ccc42a8*eurostat_datasets_abe6fe117e818fbc*eurostat_datasets_56c3bf039c97b6aa|1.811|One or more parsing issues, call `problems()` on your data frame for details, e.g.:   dat <- vroom(...)   problems(dat)|
 eurostat_regions|stem|b29a1c471a378cdb|9489e957476e144b|2c530c1562a7fbd1|-92942224||t20475.6175s|s5071b|5071|rds|local|vector|||0.009||
 bioatmo_data|stem|9aa8c4fb4ecce02d|ea9e75b6222b7bbc|2c530c1562a7fbd1|-123710395||t20476.5083796296s|s23130415b|23130415|rds|local|vector|||1.482||
@@ -49,6 +48,16 @@ eurostat_metadata_244d7128c3f3a0af|branch|997d48145891223e|1efb92421c3c9c2a|63c7
 eurostat_metadata_6c0484500b92e0c9|branch|e9ca191b25dcad92|1efb92421c3c9c2a|53439c740457b4f8|704988602||t20475.6184375s|s242b|242|rds|local|vector|eurostat_metadata||0.399||
 eurostat_metadata_f9798f6949280485|branch|79b5ecd5eebb0a79|1efb92421c3c9c2a|008d45425c876bba|1706167116||t20475.6184375s|s233b|233|rds|local|vector|eurostat_metadata||0.025||
 eurostat_metadata_06aa165d1de024df|branch|a1b16c55a69ff809|1efb92421c3c9c2a|5080b4a20d29ec23|-755060892||t20475.6184375s|s232b|232|rds|local|vector|eurostat_metadata||0.023||
+aggregated_data|stem|aa560b0bfee83d04|1fc90c722938bf89|9e765cd99465c489|403735254||t20482.4994426685s|s28449383b|28449383|rds|local|vector|||38.815|There were 22 warnings in `transmute()`. The first warning was: ℹ In argument: `data = map2(...)`. Caused by warning in `left_join()`: ! Detected an unexpected many-to-many relationship between `x` and `y`. ℹ Row 1 of `x` matches multiple rows in `y`. ℹ Row 133 of `y` matches multiple rows in `x`. ℹ If a many-to-many relationship is expected, set `relationship =   'many-to-many'` to silence this warning. ℹ Run `dplyr::last_dplyr_warnings()` to see the 21 remaining warnings.|
+na_plot|stem|0895e8d69b426f41|0a256d5783010a65|f2937ddc789ebab8|-902791161||t20482.6318176116s||59|rds|local|vector|||3.268||object 'geo' not found
+times|stem|2381b63979edfdeb|8598924672adceaa|2c530c1562a7fbd1|178808106||t20483.4143742097s|s234b|234|rds|local|vector|||0.745||
+regions|stem|91882ebe25467e01|75126f572e88af48|2c530c1562a7fbd1|-140773339||t20483.4143746084s|s3179b|3179|rds|local|vector|||0.012||
+n_expected_rows|stem|9d878d526cf6f211|20486c49d293d4df|95d932a5b5794bbd|43498857||t20483.4440893549s|s51b|51|rds|local|vector|||0||
+max_na_frac|stem|0caef0b07b2bd4ff|a7fde5bc869817bc|2c530c1562a7fbd1|1968109481||t20483.5078355036s|s53b|53|rds|local|vector|||0.708||
+space_times|stem|0f21abc051e726dc|1a918fd0b3d4a62b|95d932a5b5794bbd|525720312||t20483.512923912s|s256211b|256211|rds|local|vector|||0.037||
+raw_cube|stem|f58318f61987a016|8508c0c4904131db|5a95f52b17ba9c94|647556434||t20483.5133132504s|s17787169b|17787169|rds|local|vector|||28.711|There were 22 warnings in `transmute()`. The first warning was: ℹ In argument: `data = map2(...)`. Caused by warning in `left_join()`: ! Detected an unexpected many-to-many relationship between `x` and `y`. ℹ Row 1 of `x` matches multiple rows in `y`. ℹ Row 133 of `y` matches multiple rows in `x`. ℹ If a many-to-many relationship is expected, set `relationship =   'many-to-many'` to silence this warning. ℹ Run `dplyr::last_dplyr_warnings()` to see the 21 remaining warnings.|
+cube|stem|af9d13de2a073d75|286ae1f3e42c7fe2|67a3b3edcb68692b|-465492006||t20483.5133424974s|s19019265b|19019265|rds|local|vector|||0.093||
+detrended_cube|stem|e1b74c35287cc47d|12f39166d72c38a7|67a3b3edcb68692b|86121086||t20483.5252870958s|s17310087b|17310087|rds|local|vector|||35.235||
 calculate_cca|function|312d1381db8fc24b
 primary_color|object|092a5f65d4b3906d
 resample_space_to_nuts3|function|dca19a4479ae4a50
@@ -61,5 +70,4 @@ resample_time_to_quarter|function|88c41afa09c0b828
 light_gray_color|object|85009bc8ac4df8e9
 write_nc_tibble|function|8e3cf56968bf7460
 sphere_colors|object|1b3c78ef062c343b
-cube|stem|9c40b71787e84a1e|663c349df980172e|9e765cd99465c489|-465492006||t20481.5734564372s|s34145790b|34145790|rds|local|vector|||38.918|There were 22 warnings in `transmute()`. The first warning was: ℹ In argument: `data = map2(...)`. Caused by warning in `left_join()`: ! Detected an unexpected many-to-many relationship between `x` and `y`. ℹ Row 1 of `x` matches multiple rows in `y`. ℹ Row 133 of `y` matches multiple rows in `x`. ℹ If a many-to-many relationship is expected, set `relationship =   'many-to-many'` to silence this warning. ℹ Run `dplyr::last_dplyr_warnings()` to see the 21 remaining warnings.|
-detrended_cube|stem|8faeb4cf2c385a86|8952d2a95dcf8918|9e765cd99465c489|86121086||t20481.5751043619s|s18530889b|18530889|rds|local|vector|||134.887|There were 22 warnings in `transmute()`. The first warning was: ℹ In argument: `data = map2(...)`. Caused by warning in `left_join()`: ! Detected an unexpected many-to-many relationship between `x` and `y`. ℹ Row 1 of `x` matches multiple rows in `y`. ℹ Row 133 of `y` matches multiple rows in `x`. ℹ If a many-to-many relationship is expected, set `relationship =   'many-to-many'` to silence this warning. ℹ Run `dplyr::last_dplyr_warnings()` to see the 21 remaining warnings.|
+features|stem|5500411276edfba7|41dabad1957281b5|67a3b3edcb68692b|-477244766||t20483.5302394018s|s724b|724|rds|local|vector|||0.111|One or more parsing issues, call `problems()` on your data frame for details, e.g.:   dat <- vroom(...)   problems(dat)|
