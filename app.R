@@ -81,7 +81,7 @@ ui <- page_navbar(
       ),
       selectInput(
         "detrended_features", "Detrend features",
-        choices = features$label, multiple = TRUE
+        choices = features$label,  selected = features$label, multiple = TRUE
       )
     ),
     h3("Features"),
