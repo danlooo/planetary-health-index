@@ -16,7 +16,9 @@ bio,H,H
 bio,ET,ET,Evapotranspiration
 bio,ET_T,ET_T, ET_T
 bio,GPP,GPP,Gross Primary Productivity
-bio,skt,skt,Skin temperature
+bio,skt,ST,Surface temperature
+bio, EVIgapfilled_061_QCdyn,EVI,Enhanced Vegetation Index
+bio, q,Sensible heat,Sensible heat fluxt
 socio,demo_r_d3dens,Pop density,Population density
 socio,nama_10r_3gdp,GDP,GDP
 socio,edat_lfse_04_T_ED3-8_Y25-64,Education,Population in private households with tertiary education among 25-64 year olds
