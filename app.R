@@ -19,7 +19,8 @@ nuts3_regions <- read_csv("data/nuts3_regions.csv")
 nuts3_sf <- get_eurostat_geospatial(
   output_class = "sf",
   resolution = "20",
-  nuts_level = "3"
+  nuts_level = "3",
+  year = "2024"
 )
 
 tar_load(cube)
@@ -81,7 +82,7 @@ ui <- page_navbar(
       ),
       selectInput(
         "detrended_features", "Detrend features",
-        choices = features$label,  selected = features$label, multiple = TRUE
+        choices = features$label, selected = features$label, multiple = TRUE
       )
     ),
     h3("Features"),
@@ -201,7 +202,10 @@ server <- function(input, output, session) {
   cca_rev <- reactive(calculate_cca(processed_cube(), y_features(), x_features())) |>
     bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features)
 
-  output$features_table <- features |> select(-var_id) |> renderTable() |> bindCache(1)
+  output$features_table <- features |>
+    select(-var_id) |>
+    renderTable() |>
+    bindCache(1)
 
   output$scores_plt <- renderPlot(
     bg = "transparent",
