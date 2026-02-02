@@ -310,12 +310,21 @@ server <- function(input, output, session) {
         filter(feature == input$selected_feature)
     }
 
+    max_val <-
+      cur_data$value |>
+      abs() |>
+      max()
+
     nuts3_sf |>
       left_join(cur_data) |>
       ggplot() +
       geom_sf(data = land_sf, fill = light_gray_color, color = light_gray_color) +
       geom_sf(aes(fill = value), color = dark_gray_color) +
-      scale_fill_gradientn(colours = color("vik")(10), na.value = light_gray_color) +
+      scale_fill_gradientn(
+        colours = color("vik")(10),
+        na.value = light_gray_color,
+        limits = c(-max_val, max_val)
+      ) +
       coord_sf(
         xlim = c(2377294, 7453440),
         ylim = c(1313597, 5628510),
