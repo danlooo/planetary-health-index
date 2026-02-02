@@ -10,6 +10,7 @@ library(arrow)
 library(RNetCDF)
 library(ncdf4)
 library(rrcov3way)
+library(khroma)
 
 source("lib.R")
 
@@ -29,14 +30,15 @@ list(
     name = features,
     command = {
       tibble(var_id = colnames(raw_cube)) |>
-      left_join(features_csv) |>
-      mutate(
-        sphere = replace_na(sphere, "socio"),
-        label = ifelse(is.na(label), var_id, label),
-        description = ifelse(is.na(description), label, description),
-      ) |>
-      arrange(sphere, var_id)
-  }),
+        left_join(features_csv) |>
+        mutate(
+          sphere = replace_na(sphere, "socio"),
+          label = ifelse(is.na(label), var_id, label),
+          description = ifelse(is.na(description), label, description),
+        ) |>
+        arrange(sphere, var_id)
+    }
+  ),
   tar_target(
     name = eurostat_datasets,
     command = {
@@ -148,7 +150,7 @@ list(
         transmute(
           code,
           data = map2(data, code, possibly(otherwise = NA, ~ {
-            res <- 
+            res <-
               .x |>
               # discard aggregated data
               filter(!str_starts(geo, "EU|EA|EEA")) |> # e.g euro area
@@ -177,7 +179,7 @@ list(
 
             abundant_features <-
               res |>
-              summarise(across(where(is.numeric), ~sum(is.na(.x)))) |>
+              summarise(across(where(is.numeric), ~ sum(is.na(.x)))) |>
               pivot_longer(everything()) |>
               filter(value <= max_na_frac * n_expected_rows) |>
               pull(name)
@@ -208,26 +210,148 @@ list(
     name = detrended_cube,
     command = {
       raw_cube |>
-      as_tibble(rownames = "space_time") |>
-      pivot_longer(-space_time, names_to = "var_id", values_to="pre_value") |>
-      separate(space_time, c("geo", "year", "quarter")) |>
-      # detrend
-      group_by(var_id, geo, year) |>
-      mutate(value = pre_value - mean(pre_value, na.rm=TRUE)) |>
-      group_by(var_id, geo, quarter) |>
-      mutate(value = pre_value - mean(pre_value, na.rm=TRUE)) |>        
-      select(-pre_value) |>
-      ungroup() |>
-      # pivot to matrix
-      transmute(space_time = paste0(geo, "_", year , "-", quarter), var_id, value) |>
-      pivot_wider(names_from = var_id, values_from = value) |>
-      column_to_rownames("space_time") |>
-      # handle power law distributed vars like GDP
-      # mutate(across(starts_with("nama_"), log)) |>
-      # mutate(across(everything(), ~ ifelse(is.infinite(.x), NA, .x))) |>
-      # z score scaling
-      mutate(across(where(is.numeric), scale)) |>
-      mutate(across(everything(), ~ replace_na(.x, 0)))
+        as_tibble(rownames = "space_time") |>
+        pivot_longer(-space_time, names_to = "var_id", values_to = "pre_value") |>
+        separate(space_time, c("geo", "year", "quarter")) |>
+        # detrend
+        group_by(var_id, geo, year) |>
+        mutate(value = pre_value - mean(pre_value, na.rm = TRUE)) |>
+        group_by(var_id, geo, quarter) |>
+        mutate(value = pre_value - mean(pre_value, na.rm = TRUE)) |>
+        select(-pre_value) |>
+        ungroup() |>
+        # pivot to matrix
+        transmute(space_time = paste0(geo, "_", year, "-", quarter), var_id, value) |>
+        pivot_wider(names_from = var_id, values_from = value) |>
+        column_to_rownames("space_time") |>
+        # z score scaling
+        mutate(across(where(is.numeric), scale)) |>
+        mutate(across(everything(), ~ replace_na(.x, 0)))
+    }
+  ),
+  tar_target(
+    name = detrended_data,
+    command = {
+      detrended_cube |>
+        as_tibble(rownames = "space_time") |>
+        pivot_longer(-space_time, names_to = "var_id", values_to = "value") |>
+        left_join(features) |>
+        mutate(sphere = sphere |> replace_na("socio")) |>
+        separate(space_time, into = c("geo", "time"), sep = "_") |>
+        mutate(time = yq(time))
+    }
+  ),
+  tar_target(
+    name = detrended_frequency_plt,
+    format = "file",
+    command = {
+      detrended_data |>
+        ggplot(aes(value, color = sphere, group = var_id)) +
+        geom_density() +
+        geom_vline(xintercept = 0) +
+        scale_x_continuous(limits = c(-100, 100)) +
+        scale_y_log10() +
+        annotation_logticks() +
+        scale_color_manual(values = sphere_colors) +
+        labs(
+          x = "Value", y = "Density", color = "Sphere",
+          title = "Detrended feature frequency"
+        )
+
+      ggsave("out/detrended-features-frequency.png")
+    }
+  ),
+  tar_target(
+    name = detrended_values_plt,
+    format = "file",
+    command = {
+      detrended_data |>
+        ggplot(aes(time, geo, fill = value)) +
+        geom_tile() +
+        scale_fill_vik() +
+        facet_wrap(~var_id)
+
+      ggsave("out/detrended-features-values.png")
+    }
+  ),
+  tar_target(
+    name = detrended_distribution_quarterly_plt,
+    format = "file",
+    command = {
+      detrended_data |>
+        mutate(quarter = quarter(time) |> as_factor()) |>
+        ggplot(aes(quarter, value)) +
+        geom_boxplot() +
+        facet_wrap(~var_id)
+
+      ggsave("out/detrended-distribution-quarterly.png", width = 10, height = 10)
+    }
+  ),
+  tar_target(
+    name = detrended_distribution_annual_plt,
+    format = "file",
+    command = {
+      detrended_data |>
+        mutate(year = year(time) |> as_factor()) |>
+        ggplot(aes(year, value)) +
+        geom_boxplot() +
+        facet_wrap(~var_id)
+
+      ggsave("out/detrended-distribution-annual.png", width = 10, height = 10)
+    }
+  ),
+  tar_target(
+    name = eurostat_availability_plt,
+    format = "file",
+    command = {
+      data <-
+        eurostat_data |>
+        transmute(
+          code,
+          data = map2(data, code, possibly(otherwise = NA, ~ {
+            .x |>
+              # discard aggregated data
+              filter(!str_starts(geo, "EU|EA|EEA")) |> # e.g euro area
+              group_by(nut_level = nchar(geo) - 2) |>
+              nest() |>
+              arrange(-nut_level) |>
+              pull(data) |>
+              first() |>
+              # create variable
+              mutate(code = .y) |>
+              select(code, everything()) |>
+              unite(var, -any_of(setdiff(stable_columns, "code")), sep = "_") |>
+              distinct(var, geo, TIME_PERIOD, .keep_all = TRUE) |>
+              # re-scale
+              resample_time_to_quarter() |>
+              resample_space_to_nuts3(nuts3_regions, eurostat_regions) |>
+              # test for NA
+              transmute(code = .y, var_id = var, geo, time = yq(TIME_PERIOD), value = values) |>
+              filter(!is.na(value))
+          }))
+        ) |>
+        filter(!is.na(data)) |>
+        pull(data) |>
+        bind_rows()
+
+      data |>
+        distinct(var_id, geo, time, .keep_all = TRUE) |>
+        count(code, var_id, time) |>
+        ggplot(aes(time, var_id, fill = n, color = n)) +
+        geom_tile() +
+        scale_color_oslo(reverse = TRUE) +
+        scale_fill_oslo(reverse = TRUE) +
+        theme(axis.text.y = element_blank()) +
+        facet_grid(code ~ ., scales = "free_y") +
+        labs(
+          title = "Eurostat feature availability",
+          subtitle = "last.update > 2020-01-01, > 500 spatio-temporal values, any of selected codes",
+          x = "Time (quarterly)",
+          y = "Feature",
+          fill = "Number of NUTS3 regions with data",
+          color = "Number of NUTS3 regions with data"
+        )
+      ggsave("out/eurostat-data-availability.png")
     }
   )
 )

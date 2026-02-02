@@ -17,6 +17,7 @@ light_gray_color <- "#a4a4a4"
 dark_gray_color <- "#464646"
 spheres <- names(sphere_colors)
 
+theme_set(new = theme_classic())
 
 write_nc_tibble <- function(data, nc_path) {
   # uniform dimension with same shape of other cubes
