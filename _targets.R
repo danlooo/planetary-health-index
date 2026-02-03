@@ -87,11 +87,23 @@ list(
     }
   ),
   tar_target(
-    eurostat_regions,
-    tibble(
-      geo = eurostat_geodata_60_2016$geo,
-      nut_level = eurostat_geodata_60_2016$LEVL_CODE
-    )
+    name = eurostat_regions,
+    command = {
+      list(
+        "data/nuts-regions/NUTS_RG_20M_2003_4326.geojson",
+        "data/nuts-regions/NUTS_RG_20M_2006_4326.geojson",
+        "data/nuts-regions/NUTS_RG_20M_2010_4326.geojson",
+        "data/nuts-regions/NUTS_RG_20M_2013_4326.geojson",
+        "data/nuts-regions/NUTS_RG_20M_2016_4326.geojson",
+        "data/nuts-regions/NUTS_RG_20M_2021_4326.geojson",
+        "data/nuts-regions/NUTS_RG_20M_2024_4326.geojson"
+      ) |>
+        map(read_sf) |>
+        map(as_tibble) |>
+        bind_rows() |>
+        select(geo = NUTS_ID, nut_level = LEVL_CODE) |>
+        distinct(geo, nut_level)
+    }
   ),
   tar_target(
     name = nuts3_regions,
