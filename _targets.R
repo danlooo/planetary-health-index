@@ -11,6 +11,7 @@ library(RNetCDF)
 library(ncdf4)
 library(rrcov3way)
 library(khroma)
+library(sf)
 
 source("lib.R")
 
@@ -24,7 +25,12 @@ list(
   tar_target(regions, read_lines("data/geo3.txt")),
   tar_target(n_expected_rows, length(regions) * length(times)),
   tar_target(max_na_frac, 0.1),
-  tar_target(space_times, expand_grid(space = regions, time = times) |> unite("space_time", everything()) |> pull(space_time)),
+  tar_target(
+    space_times,
+    expand_grid(space = regions, time = times) |>
+      unite("space_time", everything()) |>
+      pull(space_time)
+  ),
   tar_target(features_csv, read_csv("data/features.csv")),
   tar_target(
     name = features,
@@ -39,12 +45,25 @@ list(
         arrange(sphere, var_id)
     }
   ),
-  tar_target(nuts3_sf, get_eurostat_geospatial(output_class = "sf", resolution = "20", nuts_level = "3",  year = "2024")),
+  tar_target(
+    nuts3_sf,
+    get_eurostat_geospatial(
+      output_class = "sf",
+      resolution = "20",
+      nuts_level = "3",
+      year = "2024"
+    )
+  ),
   tar_target(
     name = eurostat_datasets,
     command = {
       get_eurostat_toc() |>
-        mutate(last.update.of.data = as.Date(last.update.of.data, format = "%d.%m.%Y")) %>%
+        mutate(
+          last.update.of.data = as.Date(
+            last.update.of.data,
+            format = "%d.%m.%Y"
+          )
+        ) %>%
         filter(
           type != "folder" &
             last.update.of.data > as.Date("2020-01-01") &
@@ -67,10 +86,13 @@ list(
         )
     }
   ),
-  tar_target(eurostat_regions, tibble(
-    geo = eurostat_geodata_60_2016$geo,
-    nut_level = eurostat_geodata_60_2016$LEVL_CODE
-  )),
+  tar_target(
+    eurostat_regions,
+    tibble(
+      geo = eurostat_geodata_60_2016$geo,
+      nut_level = eurostat_geodata_60_2016$LEVL_CODE
+    )
+  ),
   tar_target(
     name = nuts3_regions,
     command = {
@@ -93,33 +115,45 @@ list(
           code,
           colnames = map(data, ~ .x |> colnames()),
           freq = map_chr(data, ~ .x$freq[[1]]),
-          nut_level = map_dbl(data, ~ {
-            # infer nut_level by looking at first few rows
-            nut_level_count <-
-              .x |>
-              head(100) |>
-              distinct(geo) |>
-              inner_join(eurostat_regions, by = "geo") |>
-              count(nut_level) |>
-              arrange(-n)
+          nut_level = map_dbl(
+            data,
+            ~ {
+              # infer nut_level by looking at first few rows
+              nut_level_count <-
+                .x |>
+                head(100) |>
+                distinct(geo) |>
+                inner_join(eurostat_regions, by = "geo") |>
+                count(nut_level) |>
+                arrange(-n)
 
-            if (nrow(nut_level_count) == 1) {
-              nut_level_count$nut_level[[1]]
-            } else {
-              # some datasets may have multiple nut levels
-              max(nut_level_count$nut_level)
+              if (nrow(nut_level_count) == 1) {
+                nut_level_count$nut_level[[1]]
+              } else {
+                # some datasets may have multiple nut levels
+                max(nut_level_count$nut_level)
+              }
             }
-          }),
-          vars = map2_dbl(data, code, ~ {
-            var_columns <- setdiff(names(.x), stable_columns)
+          ),
+          vars = map2_dbl(
+            data,
+            code,
+            ~ {
+              var_columns <- setdiff(names(.x), stable_columns)
 
-            .x |>
-              mutate(code = .y) |>
-              unite(var, all_of(c("code", var_columns)), sep = "_", remove = TRUE) |>
-              group_by(var) |>
-              count() |>
-              nrow()
-          })
+              .x |>
+                mutate(code = .y) |>
+                unite(
+                  var,
+                  all_of(c("code", var_columns)),
+                  sep = "_",
+                  remove = TRUE
+                ) |>
+                group_by(var) |>
+                count() |>
+                nrow()
+            }
+          )
         )
     }
   ),
@@ -130,16 +164,19 @@ list(
 
       tibble(var_id = names(nc$var)) |>
         mutate(
-          data = map(var_id, ~ {
-            mat <- ncvar_get(nc, .x)
-            rownames(mat) <- nc$dim$time$vals
-            colnames(mat) <- nc$dim$country$vals
+          data = map(
+            var_id,
+            ~ {
+              mat <- ncvar_get(nc, .x)
+              rownames(mat) <- nc$dim$time$vals
+              colnames(mat) <- nc$dim$country$vals
 
-            as_tibble(mat) |>
-              mutate(TIME_PERIOD = nc$dim$time$vals) |>
-              pivot_longer(-TIME_PERIOD, names_to = "geo", values_to = .x) |>
-              unite("space_time", geo, TIME_PERIOD)
-          })
+              as_tibble(mat) |>
+                mutate(TIME_PERIOD = nc$dim$time$vals) |>
+                pivot_longer(-TIME_PERIOD, names_to = "geo", values_to = .x) |>
+                unite("space_time", geo, TIME_PERIOD)
+            }
+          )
         ) |>
         deframe()
     }
@@ -150,43 +187,54 @@ list(
       eurostat_data |>
         transmute(
           code,
-          data = map2(data, code, possibly(otherwise = NA, ~ {
-            res <-
-              .x |>
-              # discard aggregated data
-              filter(!str_starts(geo, "EU|EA|EEA")) |> # e.g euro area
-              group_by(nut_level = nchar(geo) - 2) |>
-              nest() |>
-              arrange(-nut_level) |>
-              pull(data) |>
-              first() |>
-              # create variable
-              mutate(code = .y) |>
-              select(code, everything()) |>
-              unite(var, -any_of(setdiff(stable_columns, "code")), sep = "_") |>
-              distinct(var, geo, TIME_PERIOD, .keep_all = TRUE) |>
-              # re-scale
-              resample_time_to_quarter() |>
-              resample_space_to_nuts3(nuts3_regions, eurostat_regions) |>
-              # crop to bioatmo range
-              filter(TIME_PERIOD %in% times & geo %in% regions) |>
-              # to space time cube
-              unite("space_time", geo, TIME_PERIOD) |>
-              arrange(space_time) |>
-              select(var, space_time, values) |>
-              distinct(var, space_time, .keep_all = TRUE) |>
-              pivot_wider(names_from = var, values_from = values) |>
-              complete(space_time = space_times)
+          data = map2(
+            data,
+            code,
+            possibly(
+              otherwise = NA,
+              ~ {
+                res <-
+                  .x |>
+                  # discard aggregated data
+                  filter(!str_starts(geo, "EU|EA|EEA")) |> # e.g euro area
+                  group_by(nut_level = nchar(geo) - 2) |>
+                  nest() |>
+                  arrange(-nut_level) |>
+                  pull(data) |>
+                  first() |>
+                  # create variable
+                  mutate(code = .y) |>
+                  select(code, everything()) |>
+                  unite(
+                    var,
+                    -any_of(setdiff(stable_columns, "code")),
+                    sep = "_"
+                  ) |>
+                  distinct(var, geo, TIME_PERIOD, .keep_all = TRUE) |>
+                  # re-scale
+                  resample_time_to_quarter() |>
+                  resample_space_to_nuts3(nuts3_regions, eurostat_regions) |>
+                  # crop to bioatmo range
+                  filter(TIME_PERIOD %in% times & geo %in% regions) |>
+                  # to space time cube
+                  unite("space_time", geo, TIME_PERIOD) |>
+                  arrange(space_time) |>
+                  select(var, space_time, values) |>
+                  distinct(var, space_time, .keep_all = TRUE) |>
+                  pivot_wider(names_from = var, values_from = values) |>
+                  complete(space_time = space_times)
 
-            abundant_features <-
-              res |>
-              summarise(across(where(is.numeric), ~ sum(is.na(.x)))) |>
-              pivot_longer(everything()) |>
-              filter(value <= max_na_frac * n_expected_rows) |>
-              pull(name)
+                abundant_features <-
+                  res |>
+                  summarise(across(where(is.numeric), ~ sum(is.na(.x)))) |>
+                  pivot_longer(everything()) |>
+                  filter(value <= max_na_frac * n_expected_rows) |>
+                  pull(name)
 
-            res[c("space_time", abundant_features)]
-          }))
+                res[c("space_time", abundant_features)]
+              }
+            )
+          )
         ) |>
         filter(!is.na(data)) |>
         pull(data) |>
@@ -212,7 +260,11 @@ list(
     command = {
       raw_cube |>
         as_tibble(rownames = "space_time") |>
-        pivot_longer(-space_time, names_to = "var_id", values_to = "pre_value") |>
+        pivot_longer(
+          -space_time,
+          names_to = "var_id",
+          values_to = "pre_value"
+        ) |>
         separate(space_time, c("geo", "year", "quarter")) |>
         # detrend
         group_by(var_id, geo, year) |>
@@ -222,7 +274,11 @@ list(
         select(-pre_value) |>
         ungroup() |>
         # pivot to matrix
-        transmute(space_time = paste0(geo, "_", year, "-", quarter), var_id, value) |>
+        transmute(
+          space_time = paste0(geo, "_", year, "-", quarter),
+          var_id,
+          value
+        ) |>
         pivot_wider(names_from = var_id, values_from = value) |>
         column_to_rownames("space_time") |>
         # z score scaling
@@ -255,7 +311,9 @@ list(
         annotation_logticks() +
         scale_color_manual(values = sphere_colors) +
         labs(
-          x = "Value", y = "Density", color = "Sphere",
+          x = "Value",
+          y = "Density",
+          color = "Sphere",
           title = "Detrended feature frequency"
         )
 
@@ -285,7 +343,11 @@ list(
         geom_boxplot() +
         facet_wrap(~var_id)
 
-      ggsave("out/detrended-distribution-quarterly.png", width = 10, height = 10)
+      ggsave(
+        "out/detrended-distribution-quarterly.png",
+        width = 10,
+        height = 10
+      )
     }
   ),
   tar_target(
@@ -309,27 +371,44 @@ list(
         eurostat_data |>
         transmute(
           code,
-          data = map2(data, code, possibly(otherwise = NA, ~ {
-            .x |>
-              # discard aggregated data
-              filter(!str_starts(geo, "EU|EA|EEA")) |> # e.g euro area
-              group_by(nut_level = nchar(geo) - 2) |>
-              nest() |>
-              arrange(-nut_level) |>
-              pull(data) |>
-              first() |>
-              # create variable
-              mutate(code = .y) |>
-              select(code, everything()) |>
-              unite(var, -any_of(setdiff(stable_columns, "code")), sep = "_") |>
-              distinct(var, geo, TIME_PERIOD, .keep_all = TRUE) |>
-              # re-scale
-              resample_time_to_quarter() |>
-              resample_space_to_nuts3(nuts3_regions, eurostat_regions) |>
-              # test for NA
-              transmute(code = .y, var_id = var, geo, time = yq(TIME_PERIOD), value = values) |>
-              filter(!is.na(value))
-          }))
+          data = map2(
+            data,
+            code,
+            possibly(
+              otherwise = NA,
+              ~ {
+                .x |>
+                  # discard aggregated data
+                  filter(!str_starts(geo, "EU|EA|EEA")) |> # e.g euro area
+                  group_by(nut_level = nchar(geo) - 2) |>
+                  nest() |>
+                  arrange(-nut_level) |>
+                  pull(data) |>
+                  first() |>
+                  # create variable
+                  mutate(code = .y) |>
+                  select(code, everything()) |>
+                  unite(
+                    var,
+                    -any_of(setdiff(stable_columns, "code")),
+                    sep = "_"
+                  ) |>
+                  distinct(var, geo, TIME_PERIOD, .keep_all = TRUE) |>
+                  # re-scale
+                  resample_time_to_quarter() |>
+                  resample_space_to_nuts3(nuts3_regions, eurostat_regions) |>
+                  # test for NA
+                  transmute(
+                    code = .y,
+                    var_id = var,
+                    geo,
+                    time = yq(TIME_PERIOD),
+                    value = values
+                  ) |>
+                  filter(!is.na(value))
+              }
+            )
+          )
         ) |>
         filter(!is.na(data)) |>
         pull(data) |>
