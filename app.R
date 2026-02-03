@@ -16,13 +16,7 @@ shinyOptions(cache = cachem::cache_mem(max_size = 1e9))
 
 nuts3_regions <- read_csv("data/nuts3_regions.csv")
 
-nuts3_sf <- get_eurostat_geospatial(
-  output_class = "sf",
-  resolution = "20",
-  nuts_level = "3",
-  year = "2024"
-)
-
+tar_load(nuts3_sf)
 tar_load(cube)
 tar_load(detrended_cube)
 tar_load(features)

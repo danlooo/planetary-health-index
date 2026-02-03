@@ -39,6 +39,7 @@ list(
         arrange(sphere, var_id)
     }
   ),
+  tar_target(nuts3_sf, get_eurostat_geospatial(output_class = "sf", resolution = "20", nuts_level = "3",  year = "2024")),
   tar_target(
     name = eurostat_datasets,
     command = {
