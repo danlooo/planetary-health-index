@@ -71,3 +71,93 @@ pt_nuts_sf |>
 pt_nuts_sf |>
   ggplot(aes(geometry = geometry, color = NUTS_VERSION)) +
   geom_sf()
+
+#
+# Use official excel spreadsheets for NUT chcnages instead
+# instead of infering from geojson
+# data: see https://ec.europa.eu/eurostat/web/nuts/history
+library(readxl)
+
+get_nuts_codes <- function(data) {
+  data |>
+    mutate(across(everything(), ~ .x |> str_extract("[A-Z]{2}[A-Z0-9]*"))) |>
+    filter(across(everything(), ~ !is.na(.x)))
+}
+a <-
+  read_excel("data/nuts-regions/1995-1999.xls", skip = 1, n_max = 1502) |>
+  select(NUTS1995 = `Code 1995`, NUTS1999 = `Code 1999`) |>
+  get_nuts_codes()
+b <-
+  read_excel("data/nuts-regions/1999-2003.xls", skip = 1, n_max = 1462) |>
+  select(NUTS1999 = `Code 1999`, NUTS2003 = `Code 2003`) |>
+  get_nuts_codes()
+c <-
+  read_excel("data/nuts-regions/2003-2006.xls", skip = 1, n_max = 1870) |>
+  select(NUTS2003 = `Code 2003`, NUTS2006 = `Code 2006`) |>
+  get_nuts_codes()
+d <-
+  read_excel("data/nuts-regions/2006-2010.xls", skip = 1, n_max = 1830) |>
+  select(NUTS2006 = `Code 2006`, NUTS2010 = `Code 2010`) |>
+  get_nuts_codes()
+e <-
+  read_excel(
+    "data/nuts-regions/NUTS 2010 - NUTS 2013.xls",
+    sheet = 2,
+    skip = 1,
+    n_max = 1916
+  ) |>
+  select(NUTS2010 = `Code 2010`, NUTS2013 = `Code 2013`) |>
+  get_nuts_codes()
+f <-
+  read_excel(
+    "data/nuts-regions/NUTS2013-NUTS2016.xlsx",
+    sheet = 2,
+    skip = 1,
+    n_max = 1866
+  ) |>
+  select(NUTS2013 = `Code 2013`, NUTS2016 = `Code 2016`) |>
+  get_nuts_codes()
+g <-
+  read_excel(
+    "data/nuts-regions/NUTS2021.xlsx",
+    sheet = 4,
+    skip = 0,
+    n_max = 2150
+  ) |>
+  select(NUTS2016 = `Code 2016`, NUTS2021 = `Code 2021`) |>
+  get_nuts_codes()
+h <-
+  read_excel(
+    "data/nuts-regions/NUTS2021-NUTS2024.xlsx",
+    sheet = 3,
+    skip = 0,
+    n_max = 1648
+  ) |>
+  select(NUTS2021 = `Code 2021`, NUTS2024 = `Code 2024`) |>
+  get_nuts_codes()
+
+
+nuts_history <-
+  a |>
+  full_join(b) |>
+  full_join(c) |>
+  full_join(d) |>
+  full_join(e) |>
+  full_join(f) |>
+  full_join(g) |>
+  full_join(h) |>
+  arrange(nchar(NUTS2024), NUTS2024) |>
+  select(
+    NUTS2024,
+    NUTS2021,
+    NUTS2016,
+    NUTS2013,
+    NUTS2010,
+    NUTS2006,
+    NUTS2003,
+    NUTS1999
+  )
+
+write_csv(nuts_history, "data/nuts_history.csv")
+
+View(nuts_history)
