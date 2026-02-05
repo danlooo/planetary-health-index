@@ -86,23 +86,45 @@ list(
         )
     }
   ),
+  tar_target(nuts_levels, 0:3),
   tar_target(
     name = eurostat_regions,
+    pattern = map(nuts_levels),
     command = {
-      list(
-        "data/nuts-regions/NUTS_RG_20M_2003_4326.geojson",
-        "data/nuts-regions/NUTS_RG_20M_2006_4326.geojson",
-        "data/nuts-regions/NUTS_RG_20M_2010_4326.geojson",
-        "data/nuts-regions/NUTS_RG_20M_2013_4326.geojson",
-        "data/nuts-regions/NUTS_RG_20M_2016_4326.geojson",
-        "data/nuts-regions/NUTS_RG_20M_2021_4326.geojson",
-        "data/nuts-regions/NUTS_RG_20M_2024_4326.geojson"
+      c(
+        "NUTS2003" = "data/nuts-regions/NUTS_RG_20M_2003_4326.geojson",
+        "NUTS2006" = "data/nuts-regions/NUTS_RG_20M_2006_4326.geojson",
+        "NUTS2010" = "data/nuts-regions/NUTS_RG_20M_2010_4326.geojson",
+        "NUTS2013" = "data/nuts-regions/NUTS_RG_20M_2013_4326.geojson",
+        "NUTS2016" = "data/nuts-regions/NUTS_RG_20M_2016_4326.geojson",
+        "NUTS2021" = "data/nuts-regions/NUTS_RG_20M_2021_4326.geojson",
+        "NUTS2024" = "data/nuts-regions/NUTS_RG_20M_2024_4326.geojson"
       ) |>
-        map(read_sf) |>
-        map(as_tibble) |>
-        bind_rows() |>
-        select(geo = NUTS_ID, nut_level = LEVL_CODE) |>
-        distinct(geo, nut_level)
+        enframe(value = "path") |>
+        mutate(
+          data = map2(name, path, function(name, path) {
+            path |>
+              read_sf() |>
+              filter(LEVL_CODE == nuts_levels) |> # avoid joining all coarser regions
+              select(NUTS_ID, NUTS_NAME, LEVL_CODE, geometry) |>
+              rename_with(~ paste0(.x, "-", name), c(NUTS_ID, NUTS_NAME))
+          })
+        ) |>
+        select(name, data) |>
+        pull(data) |>
+        reduce(~ st_join(.x, .y, join = st_overlaps, largest = TRUE)) |>
+        mutate(space_id = row_number()) |>
+        pivot_longer(starts_with("NUTS")) |>
+        separate(name, into = c("name", "NUTS_VERSION"), sep = "-") |>
+        pivot_wider() |>
+        transmute(
+          nuts_version = NUTS_VERSION,
+          nut_level = ifelse(is.na(LEVL_CODE), nchar(NUTS_ID) - 2, LEVL_CODE),
+          geo = NUTS_ID,
+          space_id, # unique in space independend of NUTS version
+          name = NUTS_NAME
+        ) |>
+        arrange(nuts_version, nut_level, geo)
     }
   ),
   tar_target(
@@ -111,6 +133,7 @@ list(
       eurostat_regions |>
         filter(nut_level == 3) |>
         transmute(
+          nuts_version,
           geo3 = geo,
           geo2 = map_chr(geo3, ~ str_sub(.x, 1, 4)),
           geo1 = map_chr(geo3, ~ str_sub(.x, 1, 3)),

@@ -3,10 +3,19 @@ set.seed(1337)
 stable_columns <- c("code", "freq", "unit", "geo", "TIME_PERIOD", "values")
 
 selected_codes <- c(
-  "nama_10r_3gdp", "nama_10r_3gva", "nama_10r_2gvagr",
-  "teicp010", "teicp250", "nama_10_nfa_bs",
-  "lfst_r_lfu3pers", "demo_r_d3dens", "ilc_li02", "ilc_di11", "edat_lfse_04",
-  "nama_10r_2gfcf", "nama_10r_2emhrw"
+  "nama_10r_3gdp",
+  "nama_10r_3gva",
+  "nama_10r_2gvagr",
+  "teicp010",
+  "teicp250",
+  "nama_10_nfa_bs",
+  "lfst_r_lfu3pers",
+  "demo_r_d3dens",
+  "ilc_li02",
+  "ilc_di11",
+  "edat_lfse_04",
+  "nama_10r_2gfcf",
+  "nama_10r_2emhrw"
 )
 
 # prc_hicp_midx is too big for 16G memory
@@ -32,26 +41,29 @@ write_nc_tibble <- function(data, nc_path) {
     nest() |>
     transmute(
       var,
-      data = data |> map(~ {
-        .x |>
-          # discard elements without position
-          filter(!is.na(geo) & !is.na(TIME_PERIOD)) |>
-          # complete table to same shape of other cubes
-          select(TIME_PERIOD, geo, values) |>
-          filter(TIME_PERIOD %in% times) |>
-          filter(geo %in% locations) |>
-          distinct(TIME_PERIOD, geo, .keep_all = TRUE) |>
-          mutate(
-            TIME_PERIOD = factor(TIME_PERIOD, times),
-            geo = factor(geo, locations)
-          ) |>
-          complete(TIME_PERIOD = times, geo = locations) |>
-          # pivot to matrix
-          arrange(TIME_PERIOD, geo) |>
-          pivot_wider(names_from = geo, values_from = values) |>
-          column_to_rownames(var = "TIME_PERIOD") |>
-          as.matrix()
-      })
+      data = data |>
+        map(
+          ~ {
+            .x |>
+              # discard elements without position
+              filter(!is.na(geo) & !is.na(TIME_PERIOD)) |>
+              # complete table to same shape of other cubes
+              select(TIME_PERIOD, geo, values) |>
+              filter(TIME_PERIOD %in% times) |>
+              filter(geo %in% locations) |>
+              distinct(TIME_PERIOD, geo, .keep_all = TRUE) |>
+              mutate(
+                TIME_PERIOD = factor(TIME_PERIOD, times),
+                geo = factor(geo, locations)
+              ) |>
+              complete(TIME_PERIOD = times, geo = locations) |>
+              # pivot to matrix
+              arrange(TIME_PERIOD, geo) |>
+              pivot_wider(names_from = geo, values_from = values) |>
+              column_to_rownames(var = "TIME_PERIOD") |>
+              as.matrix()
+          }
+        )
     )
 
   nc <- create.nc(nc_path, format = "netcdf4")
@@ -72,13 +84,17 @@ write_nc_tibble <- function(data, nc_path) {
   var.put.nc(nc, "TIME_PERIOD", times)
   var.put.nc(nc, "geo", locations)
 
-  walk2(vars$var, vars$data, ~ {
-    var.def.nc(nc, .x, "NC_DOUBLE", c("TIME_PERIOD", "geo"))
-    att.put.nc(nc, .x, "missing_value", "NC_DOUBLE", fill_value)
+  walk2(
+    vars$var,
+    vars$data,
+    ~ {
+      var.def.nc(nc, .x, "NC_DOUBLE", c("TIME_PERIOD", "geo"))
+      att.put.nc(nc, .x, "missing_value", "NC_DOUBLE", fill_value)
 
-    .x[is.na(.x)] <- fill_value
-    var.put.nc(nc, .x, .y)
-  })
+      .x[is.na(.x)] <- fill_value
+      var.put.nc(nc, .x, .y)
+    }
+  )
 
   close.nc(nc)
 
@@ -95,7 +111,9 @@ resample_time_to_quarter <- function(data, agg_func = mean) {
     # aggregate monthly to quarterly
     res <-
       data |>
-      mutate(TIME_PERIOD = paste0(year(TIME_PERIOD), "-Q", quarter(TIME_PERIOD))) |>
+      mutate(
+        TIME_PERIOD = paste0(year(TIME_PERIOD), "-Q", quarter(TIME_PERIOD))
+      ) |>
       group_by(var, geo, TIME_PERIOD) |>
       summarise(var, geo, values = agg_func(values))
     return(res)
@@ -111,6 +129,34 @@ resample_time_to_quarter <- function(data, agg_func = mean) {
     return(res)
   }
   stop("freq value not implemented.")
+}
+
+to_nuts_version <- function(quarter) {
+  quarter |>
+    str_sub(1, 4) |>
+    as.numeric() |>
+    cut(
+      breaks = c(-Inf, 2003, 2006, 2010, 2013, 2016, 2021, 2024, Inf),
+      labels = c(
+        "NUTS2003",
+        "NUTS2003",
+        "NUTS2006",
+        "NUTS2010",
+        "NUTS2013",
+        "NUTS2016",
+        "NUTS2021",
+        "NUTS2024"
+      ),
+      right = FALSE
+    ) |>
+    as.character()
+}
+
+#' Harmonises output of get_eurostat to NUTS codes of given version
+harmonise_nuts <- function(data, eurostat_regions) {
+  data |>
+    mutate(nuts_version = TIME_PERIOD |> map_chr(to_nuts_version)) |>
+    left_join()
 }
 
 resample_space_to_nuts3 <- function(data, nuts3_regions, eurostat_regions) {
@@ -140,6 +186,8 @@ resample_space_to_nuts3 <- function(data, nuts3_regions, eurostat_regions) {
       select(-geo2, -geo3)
     return(res)
   } else if (nuts_level == 0) {
+    browser()
+
     # up-sample country to NUTS3 level
     res <- mutate(data, geo0 = geo)
 

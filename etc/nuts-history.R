@@ -161,3 +161,44 @@ nuts_history <-
 write_csv(nuts_history, "data/nuts_history.csv")
 
 View(nuts_history)
+nuts_history <- read_csv("data/nuts_history.csv")
+
+# Baixo Alentejo changed NUTS 3 code from PT184 to PT1C2 in NUTS 2024,
+# bilategral agreement signed in 27/07/2022
+# issue: different code of same region
+get_eurostat("demo_r_find3") |>
+  filter(geo %in% c("PT184", "PT1C2")) |>
+  count(geo)
+
+# map boundaries of NUT regions
+
+tar_load(eurostat_regions)
+
+eurostat_regions |>
+  filter(nut_level == 3) |>
+  st_as_sf() |>
+  st_transform(3035) |>
+  ggplot(aes(geometry = geometry, color = nuts_version)) +
+  geom_sf(linewidth = 0.5, fill = "transparent") +
+  ggsci::scale_color_npg() +
+  coord_sf(
+    xlim = c(2377294, 7453440),
+    ylim = c(1313597, 5628510),
+    crs = 3035
+  )
+
+# its not just code changes. what about (partial) splits?
+# R package nuts does (dasymetric) spatial interpolation
+library(nuts)
+
+get_eurostat("demo_r_find3") |>
+  filter(geo %in% c("PT184", "PT1C2")) |>
+  nuts_classify(
+    nuts_code = "geo",
+    group_vars = c("freq", "indic_de", "unit", "TIME_PERIOD")
+  ) |>
+  nuts_convert_version(
+    to_version = "2024",
+    variables = c("values" = "absolute")
+  ) |>
+  filter(to_code %in% c("PT184", "PT1C2"))
