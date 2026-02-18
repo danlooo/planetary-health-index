@@ -21,6 +21,7 @@ WORKDIR /srv/shiny-server
 COPY *.R ./
 COPY data data/
 COPY _targets _targets/
-RUN  mkdir out && R -e "targets::tar_make()"
+RUN mkdir out
+RUN --mount=type=cache,target=_targets R -e "targets::tar_make()"
 EXPOSE 80
 CMD R -e "shiny::runApp('/srv/shiny-server', host='0.0.0.0', port=80)"
