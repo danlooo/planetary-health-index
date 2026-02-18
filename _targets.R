@@ -54,38 +54,6 @@ list(
     )
   ),
   tar_target(
-    name = eurostat_datasets,
-    command = {
-      get_eurostat_toc() |>
-        mutate(
-          last.update.of.data = as.Date(
-            last.update.of.data,
-            format = "%d.%m.%Y"
-          )
-        ) %>%
-        filter(
-          type != "folder" &
-            last.update.of.data > as.Date("2020-01-01") &
-            values > 500 &
-            code %in% selected_codes
-        ) |>
-        # enforce code to be unique
-        select(-hierarchy) |>
-        distinct(code, .keep_all = TRUE)
-    }
-  ),
-  tar_target(
-    name = eurostat_data,
-    pattern = map(eurostat_datasets),
-    command = {
-      eurostat_datasets |>
-        transmute(
-          code,
-          data = map(code, ~ get_eurostat(.x, cache = FALSE))
-        )
-    }
-  ),
-  tar_target(
     name = eurostat_regions,
     command = {
       list(
@@ -119,7 +87,6 @@ list(
   ),
   tar_target(
     name = eurostat_metadata,
-    pattern = map(eurostat_data),
     command = {
       eurostat_data |>
         transmute(
@@ -190,6 +157,39 @@ list(
           )
         ) |>
         deframe()
+    }
+  ),
+  tar_target(
+    name = eurostat_file,
+    format = "file",
+    command = {
+      url <- "https://zenodo.org/records/18682075/files/eurostat-datacube.nc?download=1"
+      nc_path <- tar_path_target()
+      download.file(url, nc_path)
+      nc_path
+    }
+  ),
+  tar_target(
+    name = eurostat_data,
+    command = {
+      nc <- open.nc(eurostat_file)
+
+      res <- list()
+      for (grp in grp.inq.nc(nc)$grp) {
+        for (var_id in grp.inq.nc(grp)$varids) {
+          mat <- var.get.nc(grp, var_id)
+          rownames(mat) <- var.get.nc(nc, "time")
+          colnames(mat) <- var.get.nc(nc, "geo")
+          var_name <- var.inq.nc(grp, var_id)$name
+
+          cur_res <-
+            as_tibble(mat, rownames = "time") |>
+            pivot_longer(-time, names_to = "geo", values_to = var_name) |>
+            unite("space_time", geo, time)
+          res[[var_name]] <- cur_res
+        }
+      }
+      reduce(res, ~ full_join(.x, .y, by = join_by(space_time)))
     }
   ),
   tar_target(
@@ -307,142 +307,6 @@ list(
         mutate(sphere = sphere |> replace_na("socio")) |>
         separate(space_time, into = c("geo", "time"), sep = "_") |>
         mutate(time = yq(time))
-    }
-  ),
-  tar_target(
-    name = detrended_frequency_plt,
-    format = "file",
-    command = {
-      detrended_data |>
-        ggplot(aes(value, color = sphere, group = var_id)) +
-        geom_density() +
-        geom_vline(xintercept = 0) +
-        scale_x_continuous(limits = c(-100, 100)) +
-        scale_y_log10() +
-        annotation_logticks() +
-        scale_color_manual(values = sphere_colors) +
-        labs(
-          x = "Value",
-          y = "Density",
-          color = "Sphere",
-          title = "Detrended feature frequency"
-        )
-
-      ggsave("out/detrended-features-frequency.png")
-    }
-  ),
-  tar_target(
-    name = detrended_values_plt,
-    format = "file",
-    command = {
-      detrended_data |>
-        ggplot(aes(time, geo, fill = value)) +
-        geom_tile() +
-        scale_fill_vik() +
-        facet_wrap(~var_id)
-
-      ggsave("out/detrended-features-values.png")
-    }
-  ),
-  tar_target(
-    name = detrended_distribution_quarterly_plt,
-    format = "file",
-    command = {
-      detrended_data |>
-        mutate(quarter = quarter(time) |> as_factor()) |>
-        ggplot(aes(quarter, value)) +
-        geom_boxplot() +
-        facet_wrap(~var_id)
-
-      ggsave(
-        "out/detrended-distribution-quarterly.png",
-        width = 10,
-        height = 10
-      )
-    }
-  ),
-  tar_target(
-    name = detrended_distribution_annual_plt,
-    format = "file",
-    command = {
-      detrended_data |>
-        mutate(year = year(time) |> as_factor()) |>
-        ggplot(aes(year, value)) +
-        geom_boxplot() +
-        facet_wrap(~var_id)
-
-      ggsave("out/detrended-distribution-annual.png", width = 10, height = 10)
-    }
-  ),
-  tar_target(
-    name = eurostat_availability_plt,
-    format = "file",
-    command = {
-      data <-
-        eurostat_data |>
-        transmute(
-          code,
-          data = map2(
-            data,
-            code,
-            possibly(
-              otherwise = NA,
-              ~ {
-                .x |>
-                  # discard aggregated data
-                  filter(!str_starts(geo, "EU|EA|EEA")) |> # e.g euro area
-                  group_by(nut_level = nchar(geo) - 2) |>
-                  nest() |>
-                  arrange(-nut_level) |>
-                  pull(data) |>
-                  first() |>
-                  # create variable
-                  mutate(code = .y) |>
-                  select(code, everything()) |>
-                  unite(
-                    var,
-                    -any_of(setdiff(stable_columns, "code")),
-                    sep = "_"
-                  ) |>
-                  distinct(var, geo, TIME_PERIOD, .keep_all = TRUE) |>
-                  # re-scale
-                  resample_time_to_quarter() |>
-                  resample_space_to_nuts3(nuts3_regions, eurostat_regions) |>
-                  # test for NA
-                  transmute(
-                    code = .y,
-                    var_id = var,
-                    geo,
-                    time = yq(TIME_PERIOD),
-                    value = values
-                  ) |>
-                  filter(!is.na(value))
-              }
-            )
-          )
-        ) |>
-        filter(!is.na(data)) |>
-        pull(data) |>
-        bind_rows()
-
-      data |>
-        distinct(var_id, geo, time, .keep_all = TRUE) |>
-        count(code, var_id, time) |>
-        ggplot(aes(time, var_id, fill = n, color = n)) +
-        geom_tile() +
-        scale_color_oslo(reverse = TRUE) +
-        scale_fill_oslo(reverse = TRUE) +
-        theme(axis.text.y = element_blank()) +
-        facet_grid(code ~ ., scales = "free_y") +
-        labs(
-          title = "Eurostat feature availability",
-          subtitle = "last.update > 2020-01-01, > 500 spatio-temporal values, any of selected codes",
-          x = "Time (quarterly)",
-          y = "Feature",
-          fill = "Number of NUTS3 regions with data",
-          color = "Number of NUTS3 regions with data"
-        )
-      ggsave("out/eurostat-data-availability.png")
     }
   )
 )
