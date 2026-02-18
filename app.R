@@ -83,7 +83,7 @@ ui <- page_navbar(
     tableOutput("features_table")
   ),
   nav_panel(
-    title = "Output",
+    title = "Spheres",
     h3("Sphere relationships"),
     fluidRow(
       textInput(
@@ -91,26 +91,25 @@ ui <- page_navbar(
         value = "BE"
       )
     ),
-    fluidRow(
-      splitLayout(
-        cellWidths = c("33%", "66%"),
-        withSpinner(plotOutput("scores_plt")),
-        withSpinner(plotOutput("trajectories_plt"))
-      )
-    ),
-    fluidRow(
-      withSpinner(plotOutput("loadings_plt"))
-    ),
+    withSpinner(plotOutput("scores_plt")),
+    withSpinner(plotOutput("loadings_plt"))
+  ),
+  nav_panel(
+    title = "Spatial",
     h3("Spatial distribution"),
     fluidRow(
       selectInput("selected_feature", "Feature:", choices = features$label),
       sliderInput("selected_year", "Year:", min = 2001, max = 2021, value = 2021),
       selectInput("selected_quarter", "Quarter:", choices = c("Q1", "Q2", "Q3", "Q4"))
     ),
-    withSpinner(plotOutput("map_plt", height = "1000px")),
+    withSpinner(plotOutput("map_plt", height = "1000px"))
+  ),
+  nav_panel(
+    title = "Temporal",
     h3("Temporal distribution"),
     selectInput("selected_geo", "Region:", choices = nuts3_regions$geo3),
     withSpinner(plotOutput("timeseries_plt")),
+    withSpinner(plotOutput("trajectories_plt"))
   )
 )
 
