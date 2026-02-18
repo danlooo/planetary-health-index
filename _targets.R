@@ -9,7 +9,6 @@ library(eurostat)
 library(arrow)
 library(RNetCDF)
 library(ncdf4)
-library(rrcov3way)
 library(khroma)
 library(sf)
 
