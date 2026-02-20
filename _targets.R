@@ -15,10 +15,7 @@ library(sf)
 
 source("lib.R")
 
-tar_option_set(
-  controller = crew_controller_local(workers = 1),
-  error = "continue"
-)
+
 
 list(
   tar_target(times, read_lines("data/quarters.txt")),
@@ -212,9 +209,14 @@ list(
     }
   ),
   tar_target(
-    name = detrended_cube,
+    name = variables_pattern,
+    command = colnames(raw_cube)
+  ),
+  tar_target(
+    name = detrended_cube_var,
+    pattern = map(variables_pattern),
     command = {
-      raw_cube |>
+      raw_cube[, variables_pattern, drop = FALSE] |>
         as_tibble(rownames = "space_time") |>
         pivot_longer(
           -space_time,
@@ -239,9 +241,11 @@ list(
         column_to_rownames("space_time") |>
         # z score scaling
         mutate(across(where(is.numeric), scale)) |>
-        mutate(across(everything(), ~ replace_na(.x, 0)))
+        mutate(across(everything(), ~ replace_na(.x, 0))) |>
+        list()
     }
   ),
+  tar_target(detrended_cube, bind_cols(detrended_cube_var)),
   tar_target(
     name = detrended_data,
     command = {
