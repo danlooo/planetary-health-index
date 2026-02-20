@@ -21,5 +21,6 @@ install.packages(c(
     "shiny",
     "shinycssloaders",
     "targets",
+    "tarchetypes",
     "khroma"
 ))

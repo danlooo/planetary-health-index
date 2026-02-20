@@ -4,6 +4,7 @@
 
 library(tidyverse)
 library(targets)
+library(tarchetypes)
 library(crew)
 library(eurostat)
 library(arrow)
@@ -90,7 +91,7 @@ list(
     command = {
       eurostat_data |>
         transmute(
-          code,
+          code = NA,
           colnames = map(data, ~ .x |> colnames()),
           freq = map_chr(data, ~ .x$freq[[1]]),
           nut_level = map_dbl(
@@ -159,15 +160,10 @@ list(
         deframe()
     }
   ),
-  tar_target(
+  tar_download(
     name = eurostat_file,
-    format = "file",
-    command = {
-      url <- "https://zenodo.org/records/18682075/files/eurostat-datacube.nc?download=1"
-      nc_path <- tar_path_target()
-      download.file(url, nc_path)
-      nc_path
-    }
+    urls = c("https://zenodo.org/records/18682075/files/eurostat-datacube.nc?download=1"),
+    paths = c("data/eurostat-datacube.nc")
   ),
   tar_target(
     name = eurostat_data,
@@ -195,62 +191,11 @@ list(
   tar_target(
     name = raw_cube,
     command = {
-      eurostat_data |>
-        transmute(
-          code,
-          data = map2(
-            data,
-            code,
-            possibly(
-              otherwise = NA,
-              ~ {
-                res <-
-                  .x |>
-                  # discard aggregated data
-                  filter(!str_starts(geo, "EU|EA|EEA")) |> # e.g euro area
-                  group_by(nut_level = nchar(geo) - 2) |>
-                  nest() |>
-                  arrange(-nut_level) |>
-                  pull(data) |>
-                  first() |>
-                  # create variable
-                  mutate(code = .y) |>
-                  select(code, everything()) |>
-                  unite(
-                    var,
-                    -any_of(setdiff(stable_columns, "code")),
-                    sep = "_"
-                  ) |>
-                  distinct(var, geo, TIME_PERIOD, .keep_all = TRUE) |>
-                  # re-scale
-                  resample_time_to_quarter() |>
-                  resample_space_to_nuts3(nuts3_regions, eurostat_regions) |>
-                  # crop to bioatmo range
-                  filter(TIME_PERIOD %in% times & geo %in% regions) |>
-                  # to space time cube
-                  unite("space_time", geo, TIME_PERIOD) |>
-                  arrange(space_time) |>
-                  select(var, space_time, values) |>
-                  distinct(var, space_time, .keep_all = TRUE) |>
-                  pivot_wider(names_from = var, values_from = values) |>
-                  complete(space_time = space_times)
-
-                abundant_features <-
-                  res |>
-                  summarise(across(where(is.numeric), ~ sum(is.na(.x)))) |>
-                  pivot_longer(everything()) |>
-                  filter(value <= max_na_frac * n_expected_rows) |>
-                  pull(name)
-
-                res[c("space_time", abundant_features)]
-              }
-            )
-          )
-        ) |>
-        filter(!is.na(data)) |>
-        pull(data) |>
-        append(bioatmo_data) |>
-        reduce(full_join) |>
+      full_join(
+        reduce(bioatmo_data, ~ full_join(.x, .y, by = join_by(space_time))),
+        eurostat_data,
+        by = join_by(space_time)
+      ) |>
         column_to_rownames("space_time")
     }
   ),
