@@ -32,12 +32,11 @@ list(
   tar_target(
     name = features,
     command = {
-      tibble(var_id = colnames(raw_cube)) |>
-        left_join(features_csv) |>
+      eurostat_metadata |>
+        bind_rows(features_csv) |>
         mutate(
           sphere = replace_na(sphere, "socio"),
-          label = ifelse(is.na(label), var_id, label),
-          description = ifelse(is.na(description), label, description),
+          label = ifelse(is.na(label), var_id, label)
         ) |>
         arrange(sphere, var_id)
     }
@@ -111,6 +110,26 @@ list(
     name = eurostat_file,
     urls = c("https://zenodo.org/records/18682075/files/eurostat-datacube.nc?download=1"),
     paths = c("data/eurostat-datacube.nc")
+  ),
+  tar_target(
+    name = eurostat_metadata,
+    command = {
+      nc <- open.nc(eurostat_file)
+
+      res <- list()
+      for (grp in grp.inq.nc(nc)$grp) {
+        for (var_id in grp.inq.nc(grp)$varids) {
+          cur_res <- tibble(
+            sphere = "socio",
+            var_id = var.inq.nc(grp, var_id)$name,
+            label = att.get.nc(grp, var_id, "long_name")
+          )
+
+          res <- bind_rows(res, cur_res)
+        }
+      }
+      res
+    }
   ),
   tar_target(
     name = eurostat_data,
@@ -195,17 +214,17 @@ list(
         list()
     }
   ),
-  tar_target(detrended_cube, bind_cols(detrended_cube_var)),
-  tar_target(
-    name = detrended_data,
-    command = {
-      detrended_cube |>
-        as_tibble(rownames = "space_time") |>
-        pivot_longer(-space_time, names_to = "var_id", values_to = "value") |>
-        left_join(features) |>
-        mutate(sphere = sphere |> replace_na("socio")) |>
-        separate(space_time, into = c("geo", "time"), sep = "_") |>
-        mutate(time = yq(time))
-    }
-  )
+  tar_target(detrended_cube, bind_cols(detrended_cube_var))
+  # tar_target(
+  #   name = detrended_data,
+  #   command = {
+  #     detrended_cube |>
+  #       as_tibble(rownames = "space_time") |>
+  #       pivot_longer(-space_time, names_to = "var_id", values_to = "value") |>
+  #       left_join(features) |>
+  #       mutate(sphere = sphere |> replace_na("socio")) |>
+  #       separate(space_time, into = c("geo", "time"), sep = "_") |>
+  #       mutate(time = yq(time))
+  #   }
+  # )
 )

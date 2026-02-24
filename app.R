@@ -20,6 +20,7 @@ tar_load(nuts3_sf)
 tar_load(cube)
 tar_load(detrended_cube)
 tar_load(features)
+tar_load(eurostat_metadata)
 withSpinner <- partial(shinycssloaders::withSpinner, color = primary_color, type = 8)
 theme_set(
   theme_classic(base_size = 18) + theme(
