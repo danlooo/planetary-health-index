@@ -70,15 +70,19 @@ ui <- page_navbar(
       radioButtons(
         "y_sphere", "Target sphere",
         choices = spheres, selected = "socio"
-      ),
-      selectInput(
-        "used_features", "Use features",
-        choices = features$label, selected = features$label, multiple = TRUE
-      ),
-      selectInput(
-        "detrended_features", "Detrend features",
-        choices = features$label, selected = features$label, multiple = TRUE
       )
+    ),
+    fluidRow(
+      column(6, selectInput(
+        "used_features", "Use features",
+        choices = features$label, selected = features$label, multiple = TRUE,
+        width = "100%"
+      )),
+      column(6, selectInput(
+        "detrended_features", "Detrend features",
+        choices = features$label, selected = features$label, multiple = TRUE,
+        width = "100%"
+      ))
     ),
     h3("Features"),
     tableOutput("features_table")
