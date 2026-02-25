@@ -112,7 +112,10 @@ ui <- page_navbar(
   nav_panel(
     title = "Temporal",
     h3("Temporal distribution"),
-    selectInput("selected_geo", "Region:", choices = nuts3_regions$geo3),
+    fluidRow(
+      selectInput("selected_geo", "Region:", choices = nuts3_regions$geo3),
+      selectInput("selected_feature_for_timeseries", "Feature:", choices = features$label)
+    ),
     withSpinner(plotOutput("timeseries_plt")),
     withSpinner(plotOutput("trajectories_plt"))
   )
@@ -147,6 +150,13 @@ server <- function(input, output, session) {
       updateSelectInput(
         session,
         "selected_feature",
+        choices = c("fwd_CCA1", "rev_CCA1", "fwd_CCA2", "rev_CCA2") |> append(features),
+        selected = "fwd_CCA1"
+      )
+
+      updateSelectInput(
+        session,
+        "selected_feature_for_timeseries",
         choices = c("fwd_CCA1", "rev_CCA1", "fwd_CCA2", "rev_CCA2") |> append(features),
         selected = "fwd_CCA1"
       )
@@ -354,12 +364,14 @@ server <- function(input, output, session) {
 
     cur_data <-
       bind_rows(cur_feature_data, cur_cca_data) |>
+      filter(feature == input$selected_feature_for_timeseries) |>
       mutate(time = yq(time))
 
     cur_data |>
-      ggplot(aes(time, value, color = feature)) +
+      ggplot(aes(time, value)) +
       geom_line() +
-      scale_color_hue(l = 40)
+      scale_color_hue(l = 40) +
+      labs(title = input$selected_feature_for_timeseries, y = "")
   })
 }
 
