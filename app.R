@@ -16,6 +16,10 @@ shinyOptions(cache = cachem::cache_mem(max_size = 1e9))
 
 nuts3_regions <- read_csv("data/nuts3_regions.csv")
 
+# Load land and ocean data
+ocean_sf <- ne_download(scale = 50, type = "ocean", category = "physical", returnclass = "sf")
+land_sf <- ne_countries(scale = "medium", returnclass = "sf")
+
 tar_load(nuts3_sf)
 tar_load(cube)
 tar_load(detrended_cube)
@@ -284,10 +288,6 @@ server <- function(input, output, session) {
     input$x_sphere, input$y_sphere, input$used_features, input$detrended_features,
     input$highlight_str, input$highlight_str
   )
-
-  # Load land and ocean data
-  ocean_sf <- ne_download(scale = 50, type = "ocean", category = "physical", returnclass = "sf")
-  land_sf <- ne_countries(scale = "medium", returnclass = "sf")
 
   output$map_plt <- renderPlot({
     cur_time <- paste0(input$selected_year, "-", input$selected_quarter)
