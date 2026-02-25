@@ -38,6 +38,7 @@ list(
           sphere = replace_na(sphere, "socio"),
           label = ifelse(is.na(label), var_id, label)
         ) |>
+        filter(var_id %in% colnames(cube)) |>
         arrange(sphere, var_id)
     }
   ),

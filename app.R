@@ -214,7 +214,7 @@ server <- function(input, output, session) {
       ) |>
         unite("name", geo, time) |>
         ggplot(aes(fwd, rev)) +
-        geom_density2d_filled() +
+        # geom_density2d_filled() +
         scale_fill_grey(start = 1, end = 0, t) +
         geom_abline(color = dark_gray_color) +
         geom_point(

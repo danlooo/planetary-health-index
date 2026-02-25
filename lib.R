@@ -157,8 +157,8 @@ resample_space_to_nuts3 <- function(data, nuts3_regions, eurostat_regions) {
 
 calculate_cca <- function(cube, x_features, y_features) {
   cca <- stats::cancor(cube[, x_features], cube[, y_features])
-  U <- as.matrix(cube[, x_features]) %*% cca$xcoef
-  V <- as.matrix(cube[, y_features]) %*% cca$ycoef
+  U <- as.matrix(cube[, rownames(cca$xcoef)]) %*% cca$xcoef
+  V <- as.matrix(cube[, rownames(cca$ycoef)]) %*% cca$ycoef
 
   scores <- tibble(
     CCA1 = U[, 1],
