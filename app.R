@@ -371,7 +371,7 @@ server <- function(input, output, session) {
       ggplot(aes(time, value)) +
       geom_line() +
       scale_color_hue(l = 40) +
-      labs(title = input$selected_feature_for_timeseries, y = "")
+      labs(y = "z-score")
   })
 }
 
