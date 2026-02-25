@@ -117,7 +117,7 @@ ui <- page_navbar(
       selectInput("selected_feature_for_timeseries", "Feature:", choices = features$label)
     ),
     withSpinner(plotOutput("timeseries_plt")),
-    withSpinner(plotOutput("trajectories_plt"))
+    withSpinner(plotOutput("trajectories_plt", height = "800px"))
   )
 )
 
