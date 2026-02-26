@@ -123,7 +123,9 @@ list(
           cur_res <- tibble(
             sphere = "socio",
             var_id = var.inq.nc(grp, var_id)$name,
-            label = att.get.nc(grp, var_id, "long_name")
+            unit = att.get.nc(grp, var_id, "unit"),
+            label = paste0(att.get.nc(grp, var_id, "long_name"), " (", unit, ")"),
+            code = grp.inq.nc(grp)$name
           )
 
           res <- bind_rows(res, cur_res)
