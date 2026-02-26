@@ -265,6 +265,7 @@ server <- function(input, output, session) {
       ggplot(aes(label, CCA1)) +
       geom_bar(stat = "identity") +
       geom_hline(yintercept = 0) +
+      facet_grid(rows = vars(sphere)) +
       coord_flip() +
       labs(x = "Feature")
   }) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str)
