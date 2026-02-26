@@ -275,10 +275,12 @@ server <- function(input, output, session) {
 
   output$trajectories_fwd_plt <- renderPlot({
     cca_fwd()$scores |>
+      arrange(geo, time) |>
       ggplot(aes(CCA1, CCA2)) +
-      geom_line(
+      geom_path(
         data = ~ filter(.x, geo %in% input$selected_geo),
-        mapping = aes(group = geo, color = geo)
+        mapping = aes(group = geo, color = geo),
+        arrow = arrow(ends = "last")
       ) +
       coord_fixed() +
       guides(fill = "none") +
@@ -289,10 +291,12 @@ server <- function(input, output, session) {
 
   output$trajectories_rev_plt <- renderPlot({
     cca_rev()$scores |>
+      arrange(geo, time) |>
       ggplot(aes(CCA1, CCA2)) +
-      geom_line(
+      geom_path(
         data = ~ filter(.x, geo %in% input$selected_geo),
-        mapping = aes(group = geo, color = geo)
+        mapping = aes(group = geo, color = geo),
+        arrow = arrow(ends = "last")
       ) +
       coord_fixed() +
       guides(fill = "none") +
