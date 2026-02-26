@@ -117,11 +117,20 @@ ui <- page_navbar(
     title = "Temporal",
     h3("Temporal distribution"),
     fluidRow(
-      selectInput("selected_geo", "Region:", choices = nuts3_regions$geo3),
+      selectInput("selected_geo", "Regions:", choices = nuts3_regions$geo3, selected = c("DE300", "AT111"), multiple = TRUE),
       selectInput("selected_feature_for_timeseries", "Feature:", choices = features$label)
     ),
     withSpinner(plotOutput("timeseries_plt")),
-    withSpinner(plotOutput("trajectories_plt", height = "800px"))
+    fluidRow(
+      column(
+        6,
+        withSpinner(plotOutput("trajectories_fwd_plt", height = "800px"))
+      ),
+      column(
+        6,
+        withSpinner(plotOutput("trajectories_rev_plt", height = "800px"))
+      )
+    )
   )
 )
 
@@ -260,34 +269,34 @@ server <- function(input, output, session) {
       labs(x = "Feature")
   }) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str)
 
-  output$trajectories_plt <- renderPlot({
-    bind_rows(
-      cca_fwd()$scores |> mutate(direction = paste0(input$x_sphere, "-", input$y_sphere)),
-      cca_rev()$scores |> mutate(direction = paste0(input$y_sphere, "-", input$x_sphere))
-    ) |>
-      mutate(name = paste0(geo, time)) |>
+  output$trajectories_fwd_plt <- renderPlot({
+    cca_fwd()$scores |>
       ggplot(aes(CCA1, CCA2)) +
-      geom_density2d_filled() +
-      scale_fill_grey(start = 1, end = 0) +
       geom_line(
-        data = highlighted_data(),
-        mapping = aes(group = geo),
-        color = dark_gray_color
+        data = ~ filter(.x, geo %in% input$selected_geo),
+        mapping = aes(group = geo, color = geo)
       ) +
-      geom_density_2d(
-        data = highlighted_data(),
-        color = primary_color
-      ) +
-      geom_density_2d(color = dark_gray_color) +
-      scale_color_hue(l = 40) +
       coord_fixed() +
-      facet_wrap(~direction) +
       guides(fill = "none") +
-      labs(color = "NUTS region")
+      labs(title = paste0(input$x_sphere, "-", input$y_sphere))
   }) |> bindCache(
-    input$x_sphere, input$y_sphere, input$used_features, input$detrended_features,
-    input$highlight_str, input$highlight_str
+    input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$selected_geo
   )
+
+  output$trajectories_rev_plt <- renderPlot({
+    cca_rev()$scores |>
+      ggplot(aes(CCA1, CCA2)) +
+      geom_line(
+        data = ~ filter(.x, geo %in% input$selected_geo),
+        mapping = aes(group = geo, color = geo)
+      ) +
+      coord_fixed() +
+      guides(fill = "none") +
+      labs(title = paste0(input$y_sphere, "-", input$x_sphere))
+  }) |> bindCache(
+    input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$selected_geo
+  )
+
 
   output$map_plt <- renderPlot({
     cur_time <- paste0(input$selected_year, "-", input$selected_quarter)
@@ -351,7 +360,7 @@ server <- function(input, output, session) {
       processed_cube() |>
       as_tibble(rownames = "space_time") |>
       separate(space_time, c("geo", "time"), sep = "_") |>
-      filter(geo == input$selected_geo) |>
+      filter(geo %in% input$selected_geo) |>
       pivot_longer(-c(geo, time), names_to = "feature", values_to = "value")
 
     cur_cca_data <-
@@ -368,9 +377,8 @@ server <- function(input, output, session) {
       mutate(time = yq(time))
 
     cur_data |>
-      ggplot(aes(time, value)) +
+      ggplot(aes(time, value, color = geo)) +
       geom_line() +
-      scale_color_hue(l = 40) +
       labs(y = "z-score")
   })
 }

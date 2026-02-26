@@ -18,6 +18,7 @@ dark_gray_color <- "#464646"
 spheres <- names(sphere_colors)
 
 theme_set(new = theme_classic())
+options(ggplot2.discrete.colour = partial(scale_color_hue, l = 40))
 
 write_nc_tibble <- function(data, nc_path) {
   # uniform dimension with same shape of other cubes
