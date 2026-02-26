@@ -256,19 +256,22 @@ server <- function(input, output, session) {
     }
   ) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str)
 
-  output$loadings_plt <- renderPlot({
-    bind_rows(
-      cca_fwd()$loadings,
-      cca_rev()$loadings
-    ) |>
-      left_join(features) |>
-      ggplot(aes(label, CCA1)) +
-      geom_bar(stat = "identity") +
-      geom_hline(yintercept = 0) +
-      facet_grid(rows = vars(sphere)) +
-      coord_flip() +
-      labs(x = "Feature")
-  }) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str)
+  output$loadings_plt <- renderPlot(
+    {
+      bind_rows(
+        cca_fwd()$loadings,
+        cca_rev()$loadings
+      ) |>
+        left_join(features) |>
+        ggplot(aes(label, CCA1)) +
+        geom_bar(stat = "identity") +
+        geom_hline(yintercept = 0) +
+        facet_grid(rows = vars(sphere), scales = "free", space = "free") +
+        coord_flip() +
+        labs(x = "Feature")
+    },
+    height = function() length(input$used_features) * 15 + 50
+  )
 
   output$trajectories_fwd_plt <- renderPlot({
     cca_fwd()$scores |>
