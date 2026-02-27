@@ -143,7 +143,8 @@ list(
       for (grp in grp.inq.nc(nc)$grp) {
         for (var_id in grp.inq.nc(grp)$varids) {
           mat <- var.get.nc(grp, var_id)
-          rownames(mat) <- var.get.nc(nc, "time")
+          # overwrite climate conventions, use quarters instead
+          rownames(mat) <- times
           colnames(mat) <- var.get.nc(nc, "geo")
           var_name <- var.inq.nc(grp, var_id)$name
 
