@@ -382,7 +382,7 @@ server <- function(input, output, session) {
     cca_features <- tibble(
       var_id = c("fwd_CCA1", "fwd_CCA2", "rev_CCA1", "rev_CCA2"),
       label = c("fwd_CCA1", "fwd_CCA2", "rev_CCA1", "rev_CCA2")
-    
+    )
 
     cur_data <-
       bind_rows(cur_feature_data, cur_cca_data) |>
