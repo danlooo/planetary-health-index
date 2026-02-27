@@ -360,7 +360,8 @@ server <- function(input, output, session) {
       theme(
         axis.line = element_blank(),
         axis.text = element_blank(),
-        axis.ticks = element_blank()
+        axis.ticks = element_blank(),
+        legend.key.width = unit(3, "cm")
       ) +
       labs(fill = input$selected_feature)
   })
