@@ -369,7 +369,7 @@ server <- function(input, output, session) {
       as_tibble(rownames = "space_time") |>
       separate(space_time, c("geo", "time"), sep = "_") |>
       filter(geo %in% input$selected_geo) |>
-      pivot_longer(-c(geo, time), names_to = "feature", values_to = "value")
+      pivot_longer(-c(geo, time), names_to = "var_id", values_to = "value")
 
     cur_cca_data <-
       inner_join(
@@ -377,11 +377,17 @@ server <- function(input, output, session) {
         cca_rev()$scores |> select(rev_CCA1 = CCA1, rev_CCA2 = CCA2, geo, time)
       ) |>
       filter(geo == input$selected_geo) |>
-      pivot_longer(cols = -c(geo, time), names_to = "feature", values_to = "value")
+      pivot_longer(cols = -c(geo, time), names_to = "var_id", values_to = "value")
+
+    cca_features <- tibble(
+      var_id = c("fwd_CCA1", "fwd_CCA2", "rev_CCA1", "rev_CCA2"),
+      label = c("fwd_CCA1", "fwd_CCA2", "rev_CCA1", "rev_CCA2")
+    
 
     cur_data <-
       bind_rows(cur_feature_data, cur_cca_data) |>
-      filter(feature == input$selected_feature_for_timeseries) |>
+      left_join(features |> bind_rows(cca_features)) |>
+      filter(label == input$selected_feature_for_timeseries) |>
       mutate(time = yq(time))
 
     cur_data |>
