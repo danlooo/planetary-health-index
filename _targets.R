@@ -219,16 +219,4 @@ list(
     }
   ),
   tar_target(detrended_cube, bind_cols(detrended_cube_var))
-  # tar_target(
-  #   name = detrended_data,
-  #   command = {
-  #     detrended_cube |>
-  #       as_tibble(rownames = "space_time") |>
-  #       pivot_longer(-space_time, names_to = "var_id", values_to = "value") |>
-  #       left_join(features) |>
-  #       mutate(sphere = sphere |> replace_na("socio")) |>
-  #       separate(space_time, into = c("geo", "time"), sep = "_") |>
-  #       mutate(time = yq(time))
-  #   }
-  # )
 )
