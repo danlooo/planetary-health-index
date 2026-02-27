@@ -14,8 +14,6 @@ source("lib.R")
 
 shinyOptions(cache = cachem::cache_mem(max_size = 1e9))
 
-nuts3_regions <- read_csv("data/nuts3_regions.csv")
-
 # Load land and ocean data
 ocean_sf <- ne_download(scale = 50, type = "ocean", category = "physical", returnclass = "sf")
 land_sf <- ne_countries(scale = "medium", returnclass = "sf")
@@ -25,6 +23,8 @@ tar_load(cube)
 tar_load(detrended_cube)
 tar_load(features)
 tar_load(eurostat_metadata)
+tar_load(nuts3_regions)
+
 withSpinner <- partial(shinycssloaders::withSpinner, color = primary_color, type = 8)
 theme_set(
   theme_classic(base_size = 18) + theme(
@@ -117,7 +117,7 @@ ui <- page_navbar(
     title = "Temporal",
     h3("Temporal distribution"),
     fluidRow(
-      selectInput("selected_geo", "Regions:", choices = nuts3_regions$geo3, selected = c("DE300", "AT111"), multiple = TRUE),
+      selectInput("selected_geo", "Regions:", choices = nuts3_regions$label, selected = c("Berlin", "Paris"), multiple = TRUE),
       selectInput("selected_feature_for_timeseries", "Features:", choices = features$label, multiple = TRUE)
     ),
     withSpinner(plotOutput("timeseries_plt")),
@@ -275,11 +275,12 @@ server <- function(input, output, session) {
 
   output$trajectories_fwd_plt <- renderPlot({
     cca_fwd()$scores |>
+      left_join(nuts3_regions |> rename(geo_label = label)) |>
       arrange(geo, time) |>
       ggplot(aes(CCA1, CCA2)) +
       geom_path(
-        data = ~ filter(.x, geo %in% input$selected_geo),
-        mapping = aes(group = geo, color = geo),
+        data = ~ filter(.x, geo_label %in% input$selected_geo),
+        mapping = aes(group = geo, color = geo_label),
         arrow = arrow(ends = "last")
       ) +
       coord_fixed() +
@@ -291,11 +292,12 @@ server <- function(input, output, session) {
 
   output$trajectories_rev_plt <- renderPlot({
     cca_rev()$scores |>
+      left_join(nuts3_regions |> rename(geo_label = label)) |>
       arrange(geo, time) |>
       ggplot(aes(CCA1, CCA2)) +
       geom_path(
-        data = ~ filter(.x, geo %in% input$selected_geo),
-        mapping = aes(group = geo, color = geo),
+        data = ~ filter(.x, geo_label %in% input$selected_geo),
+        mapping = aes(group = geo, color = geo_label),
         arrow = arrow(ends = "last")
       ) +
       coord_fixed() +
@@ -364,11 +366,16 @@ server <- function(input, output, session) {
   })
 
   output$timeseries_plt <- renderPlot({
+    selected_geos <-
+      nuts3_regions |>
+      filter(label %in% input$selected_geo) |>
+      pull(geo)
+
     cur_feature_data <-
       processed_cube() |>
       as_tibble(rownames = "space_time") |>
       separate(space_time, c("geo", "time"), sep = "_") |>
-      filter(geo %in% input$selected_geo) |>
+      filter(geo %in% selected_geos) |>
       pivot_longer(-c(geo, time), names_to = "var_id", values_to = "value")
 
     cur_cca_data <-
@@ -376,7 +383,7 @@ server <- function(input, output, session) {
         cca_fwd()$scores |> select(fwd_CCA1 = CCA1, fwd_CCA2 = CCA2, geo, time),
         cca_rev()$scores |> select(rev_CCA1 = CCA1, rev_CCA2 = CCA2, geo, time)
       ) |>
-      filter(geo %in% input$selected_geo) |>
+      filter(geo %in% selected_geos) |>
       pivot_longer(cols = -c(geo, time), names_to = "var_id", values_to = "value")
 
     cca_features <- tibble(
@@ -387,11 +394,12 @@ server <- function(input, output, session) {
     cur_data <-
       bind_rows(cur_feature_data, cur_cca_data) |>
       left_join(features |> bind_rows(cca_features)) |>
+      left_join(nuts3_regions |> rename(geo_label = label)) |>
       filter(label %in% input$selected_feature_for_timeseries) |>
       mutate(time = yq(time))
 
     cur_data |>
-      ggplot(aes(time, value, color = geo, linetype = label)) +
+      ggplot(aes(time, value, color = geo_label, linetype = label)) +
       geom_line() +
       theme(legend.position = "bottom", legend.direction = "vertical") +
       labs(y = "z-score", linetype = "Feature", color = "Region")

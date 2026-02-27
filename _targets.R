@@ -70,19 +70,7 @@ list(
         distinct(geo, nut_level)
     }
   ),
-  tar_target(
-    name = nuts3_regions,
-    command = {
-      eurostat_regions |>
-        filter(nut_level == 3) |>
-        transmute(
-          geo3 = geo,
-          geo2 = map_chr(geo3, ~ str_sub(.x, 1, 4)),
-          geo1 = map_chr(geo3, ~ str_sub(.x, 1, 3)),
-          geo0 = map_chr(geo3, ~ str_sub(.x, 1, 2))
-        )
-    }
-  ),
+  tar_target(nuts3_regions, read_csv("data/nuts3_regions.csv")),
   tar_target(
     name = bioatmo_data,
     command = {
