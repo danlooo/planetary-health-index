@@ -118,7 +118,7 @@ ui <- page_navbar(
     h3("Temporal distribution"),
     fluidRow(
       selectInput("selected_geo", "Regions:", choices = nuts3_regions$geo3, selected = c("DE300", "AT111"), multiple = TRUE),
-      selectInput("selected_feature_for_timeseries", "Feature:", choices = features$label)
+      selectInput("selected_feature_for_timeseries", "Features:", choices = features$label, multiple = TRUE)
     ),
     withSpinner(plotOutput("timeseries_plt")),
     fluidRow(
@@ -284,7 +284,7 @@ server <- function(input, output, session) {
       ) +
       coord_fixed() +
       guides(fill = "none") +
-      labs(title = paste0(input$x_sphere, "-", input$y_sphere))
+      labs(title = paste0(input$x_sphere, "-", input$y_sphere), color = "Region")
   }) |> bindCache(
     input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$selected_geo
   )
@@ -300,7 +300,7 @@ server <- function(input, output, session) {
       ) +
       coord_fixed() +
       guides(fill = "none") +
-      labs(title = paste0(input$y_sphere, "-", input$x_sphere))
+      labs(title = paste0(input$y_sphere, "-", input$x_sphere), color = "Region")
   }) |> bindCache(
     input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$selected_geo
   )
@@ -376,7 +376,7 @@ server <- function(input, output, session) {
         cca_fwd()$scores |> select(fwd_CCA1 = CCA1, fwd_CCA2 = CCA2, geo, time),
         cca_rev()$scores |> select(rev_CCA1 = CCA1, rev_CCA2 = CCA2, geo, time)
       ) |>
-      filter(geo == input$selected_geo) |>
+      filter(geo %in% input$selected_geo) |>
       pivot_longer(cols = -c(geo, time), names_to = "var_id", values_to = "value")
 
     cca_features <- tibble(
@@ -387,13 +387,14 @@ server <- function(input, output, session) {
     cur_data <-
       bind_rows(cur_feature_data, cur_cca_data) |>
       left_join(features |> bind_rows(cca_features)) |>
-      filter(label == input$selected_feature_for_timeseries) |>
+      filter(label %in% input$selected_feature_for_timeseries) |>
       mutate(time = yq(time))
 
     cur_data |>
-      ggplot(aes(time, value, color = geo)) +
+      ggplot(aes(time, value, color = geo, linetype = label)) +
       geom_line() +
-      labs(y = "z-score")
+      theme(legend.position = "bottom", legend.direction = "vertical") +
+      labs(y = "z-score", linetype = "Feature", color = "Region")
   })
 }
 
