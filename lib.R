@@ -156,6 +156,53 @@ resample_space_to_nuts3 <- function(data, nuts3_regions, eurostat_regions) {
   stop("nuts_level value not implemented")
 }
 
+detrend <- function(raw_cube, detrended_features, other_features, detrend_methods, scaling_grouping) {
+  # TODO: add method customizations
+
+  #' Detrend and scale features
+  #' other_features are just scaled
+  #' grouping can be provided to customize scaling
+
+  detrended_cube <-
+    raw_cube[, detrended_features, drop = FALSE] |>
+    as_tibble(rownames = "space_time") |>
+    separate(space_time, c("geo", "year", "quarter")) |>
+    pivot_longer(
+      -c(geo, year, quarter),
+      names_to = "var_id",
+      values_to = "pre_value"
+    ) |>
+    # detrend
+    group_by(var_id, geo, year) |>
+    mutate(value = pre_value - mean(pre_value, na.rm = TRUE)) |>
+    group_by(var_id, geo, quarter) |>
+    mutate(value = pre_value - mean(pre_value, na.rm = TRUE)) |>
+    select(-pre_value) |>
+    ungroup() |>
+    # pivot to matrix
+    transmute(
+      space_time = paste0(geo, "_", year, "-", quarter),
+      var_id,
+      value
+    ) |>
+    pivot_wider(names_from = var_id, values_from = value) |>
+    column_to_rownames("space_time") |>
+    # z score scaling
+    mutate(across(where(is.numeric), scale)) |>
+    mutate(across(everything(), ~ replace_na(.x, 0)))
+
+  other_cube <-
+    raw_cube[, other_features, drop = FALSE] |>
+    # handle power law distributed vars like GDP
+    mutate(across(starts_with("nama_"), log)) |>
+    # z score scaling
+    mutate(across(where(is.numeric), scale)) |>
+    mutate(across(everything(), ~ replace_na(.x, 0))) |>
+    as.matrix()
+
+  cbind(detrended_cube, other_cube)
+}
+
 calculate_cca <- function(cube, x_features, y_features) {
   cca <- stats::cancor(cube[, x_features], cube[, y_features])
   U <- as.matrix(cube[, rownames(cca$xcoef)]) %*% cca$xcoef

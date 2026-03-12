@@ -156,55 +156,5 @@ list(
       ) |>
         column_to_rownames("space_time")
     }
-  ),
-  tar_target(
-    name = cube,
-    command = {
-      raw_cube |>
-        # handle power law distributed vars like GDP
-        mutate(across(starts_with("nama_"), log)) |>
-        # z score scaling
-        mutate(across(where(is.numeric), scale)) |>
-        mutate(across(everything(), ~ replace_na(.x, 0))) |>
-        as.matrix()
-    }
-  ),
-  tar_target(
-    name = variables_pattern,
-    command = colnames(raw_cube)
-  ),
-  tar_target(
-    name = detrended_cube_var,
-    pattern = map(variables_pattern),
-    command = {
-      raw_cube[, variables_pattern, drop = FALSE] |>
-        as_tibble(rownames = "space_time") |>
-        pivot_longer(
-          -space_time,
-          names_to = "var_id",
-          values_to = "pre_value"
-        ) |>
-        separate(space_time, c("geo", "year", "quarter")) |>
-        # detrend
-        group_by(var_id, geo, year) |>
-        mutate(value = pre_value - mean(pre_value, na.rm = TRUE)) |>
-        group_by(var_id, geo, quarter) |>
-        mutate(value = pre_value - mean(pre_value, na.rm = TRUE)) |>
-        select(-pre_value) |>
-        ungroup() |>
-        # pivot to matrix
-        transmute(
-          space_time = paste0(geo, "_", year, "-", quarter),
-          var_id,
-          value
-        ) |>
-        pivot_wider(names_from = var_id, values_from = value) |>
-        column_to_rownames("space_time") |>
-        # z score scaling
-        mutate(across(where(is.numeric), scale)) |>
-        mutate(across(everything(), ~ replace_na(.x, 0))) |>
-        list()
-    }
-  ),
-  tar_target(detrended_cube, bind_cols(detrended_cube_var))
+  )
 )

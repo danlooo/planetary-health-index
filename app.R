@@ -19,8 +19,7 @@ ocean_sf <- ne_download(scale = 50, type = "ocean", category = "physical", retur
 land_sf <- ne_countries(scale = "medium", returnclass = "sf")
 
 tar_load(nuts3_sf)
-tar_load(cube)
-tar_load(detrended_cube)
+tar_load(raw_cube)
 tar_load(features)
 tar_load(eurostat_metadata)
 tar_load(nuts3_regions)
@@ -74,7 +73,17 @@ ui <- page_navbar(
       radioButtons(
         "y_sphere", "Target sphere",
         choices = spheres, selected = "socio"
-      )
+      ),
+      checkboxGroupInput(
+        "detrend_methods", "Detrend methods",
+        choices = c(
+          "Remove quarterly effect" = "quarterly",
+          "Remove annual effect" = "annual",
+          "Remove spatial effect" = "spatial"
+        ),
+        selected = c("quarterly", "annual")
+      ),
+      selectInput("scaling_grouping", "z-scaling grouping", choices = c("feature", "feature and region"), selected = "feature")
     ),
     fluidRow(
       column(6, selectInput(
@@ -215,7 +224,7 @@ server <- function(input, output, session) {
       filter(label %in% input$used_features & !label %in% input$detrended_features) |>
       pull(var_id)
 
-    cbind(detrended_cube[, detrended_features], cube[, other_features])
+    detrend(raw_cube, detrended_features, other_features, input$detrend_methods, input$scaling_grouping)
   }) |> bindCache(input$used_features, input$detrended_features)
 
   cca_fwd <- reactive(calculate_cca(processed_cube(), x_features(), y_features())) |>
