@@ -224,13 +224,14 @@ server <- function(input, output, session) {
       filter(label %in% input$used_features & !label %in% input$detrended_features) |>
       pull(var_id)
 
-    detrend(raw_cube, detrended_features, other_features, input$detrend_methods, input$scaling_grouping)
-  }) |> bindCache(input$used_features, input$detrended_features)
+    detrend_cube(raw_cube, detrended_features, other_features, input$detrend_methods) |>
+      scale_cube(input$scaling_grouping)
+  }) |> bindCache(input$used_features, input$detrended_features, input$detrend_methods, input$scaling_grouping)
 
   cca_fwd <- reactive(calculate_cca(processed_cube(), x_features(), y_features())) |>
-    bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features)
+    bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$detrend_methods, input$scaling_grouping)
   cca_rev <- reactive(calculate_cca(processed_cube(), y_features(), x_features())) |>
-    bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features)
+    bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$detrend_methods, input$scaling_grouping)
 
   output$features_table <- features |>
     select(-var_id) |>
@@ -263,7 +264,7 @@ server <- function(input, output, session) {
         guides(fill = "none") +
         labs(x = paste0(input$x_sphere, "-", input$y_sphere), y = paste0(input$y_sphere, "-", input$x_sphere))
     }
-  ) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str)
+  ) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str, input$detrend_methods, input$scaling_grouping)
 
   output$loadings_plt <- renderPlot(
     {
@@ -296,7 +297,8 @@ server <- function(input, output, session) {
       guides(fill = "none") +
       labs(title = paste0(input$x_sphere, "-", input$y_sphere), color = "Region")
   }) |> bindCache(
-    input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$selected_geo
+    input$x_sphere, input$y_sphere, input$used_features, input$detrended_features,
+    input$selected_geo, input$detrend_methods, input$scaling_grouping
   )
 
   output$trajectories_rev_plt <- renderPlot({
@@ -313,7 +315,8 @@ server <- function(input, output, session) {
       guides(fill = "none") +
       labs(title = paste0(input$y_sphere, "-", input$x_sphere), color = "Region")
   }) |> bindCache(
-    input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$selected_geo
+    input$x_sphere, input$y_sphere, input$used_features, input$detrended_features,
+    input$selected_geo, input$detrend_methods, input$scaling_grouping
   )
 
 
