@@ -19,10 +19,14 @@ ocean_sf <- ne_download(scale = 50, type = "ocean", category = "physical", retur
 land_sf <- ne_countries(scale = "medium", returnclass = "sf")
 
 tar_load(nuts3_sf)
-tar_load(raw_cube)
 tar_load(features)
 tar_load(eurostat_metadata)
 tar_load(nuts3_regions)
+tar_load(cube_tbl)
+tar_load(global_stats)
+tar_load(annual_stats)
+tar_load(quarterly_stats)
+tar_load(geo_stats)
 
 withSpinner <- partial(shinycssloaders::withSpinner, color = primary_color, type = 8)
 theme_set(
@@ -77,7 +81,7 @@ ui <- page_navbar(
       checkboxGroupInput(
         "detrend_methods", "Detrend methods",
         choices = c(
-          "Remove quarterly effect" = "quarterly",
+          "Remove quarterly effect" = "quarter",
           "Remove annual effect" = "annual",
           "Remove spatial effect" = "spatial"
         ),
@@ -224,8 +228,10 @@ server <- function(input, output, session) {
       filter(label %in% input$used_features & !label %in% input$detrended_features) |>
       pull(var_id)
 
-    detrend_cube(raw_cube, detrended_features, other_features, input$detrend_methods) |>
-      scale_cube(input$scaling_grouping)
+    normalize_cube(
+      cube_tbl, global_stats, annual_stats, quarterly_stats, geo_stats,
+      detrended_features, other_features, input$detrend_methods, input$scaling_grouping
+    )
   }) |> bindCache(input$used_features, input$detrended_features, input$detrend_methods, input$scaling_grouping)
 
   cca_fwd <- reactive(calculate_cca(processed_cube(), x_features(), y_features())) |>

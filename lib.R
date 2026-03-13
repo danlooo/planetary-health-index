@@ -156,69 +156,71 @@ resample_space_to_nuts3 <- function(data, nuts3_regions, eurostat_regions) {
   stop("nuts_level value not implemented")
 }
 
-detrend_cube <- function(raw_cube, detrended_features, other_features, detrend_methods) {
+normalize_cube <- function(
+  cube_tbl, global_stats, annual_stats, quarterly_stats,
+  detrended_features, other_features, detrend_methods, scaling_grouping
+) {
   #' Detrend and scale features
   #' other_features are just scaled
   #' grouping can be provided to customize scaling
   #'
-  detrended_tbl <-
-    raw_cube[, detrended_features, drop = FALSE] |>
-    as_tibble(rownames = "space_time") |>
-    separate(space_time, c("geo", "year", "quarter")) |>
-    pivot_longer(
-      -c(geo, year, quarter),
-      names_to = "var_id",
-      values_to = "pre_value"
-    )
+  res <-
+    cube_tbl |>
+    filter(var_id %in% c(detrended_features, other_features)) |>
+    left_join(global_stats, by = join_by("var_id")) |>
+    mutate(value = value - global_mean)
+
 
   if ("annual" %in% detrend_methods) {
-    detrended_tbl <-
-      detrended_tbl |>
-      group_by(var_id, geo, year) |>
-      mutate(value = pre_value - mean(pre_value, na.rm = TRUE))
+    res <-
+      res |>
+      left_join(annual_stats, by = join_by(var_id, year)) |>
+      mutate(value = value - annual_mean) |>
+      select(-annual_mean)
   }
 
   if ("quarterly" %in% detrend_methods) {
-    detrended_tbl <-
-      detrended_tbl |>
-      group_by(var_id, geo, quarter) |>
-      mutate(value = pre_value - mean(pre_value, na.rm = TRUE))
+    res <-
+      res |>
+      left_join(quarterly_stats, by = join_by(var_id, quarter)) |>
+      mutate(value = value - quarterly_mean) |>
+      select(-quarterly_mean)
+  }
+
+  if ("spatial" %in% detrend_methods) {
+    res <-
+      res |>
+      left_join(geo_stats, by = join_by(var_id, geo)) |>
+      mutate(value = value - geo_mean) |>
+      select(-geo_mean)
   }
 
   if (length(other_features) > 0) {
     other_tbl <-
-      raw_cube[, other_features, drop = FALSE] |>
-      as_tibble(rownames = "space_time") |>
-      separate(space_time, c("geo", "year", "quarter")) |>
-      pivot_longer(
-        -c(geo, year, quarter),
-        names_to = "var_id",
-        values_to = "pre_value"
-      )
-    detrended_tbl <- detrended_tbl |> bind_rows(other_tbl)
+      cube_tbl |>
+      filter(var_id %in% other_features) |>
+      left_join(global_stats)
+
+    res <- res |> bind_rows(other_tbl)
   }
 
-  detrended_tbl
-}
-
-scale_cube <- function(detrended_tbl, scaling_grouping) {
+  # scaling
   if (scaling_grouping == "feature") {
     res <-
-      detrended_tbl |>
+      res |>
       group_by(var_id) |>
-      mutate(value = scale(pre_value, center = TRUE, scale = TRUE))
+      mutate(value = scale(value, center = TRUE, scale = TRUE))
   } else if (scaling_grouping == "feature and region") {
     res <-
-      detrended_tbl |>
-      group_by(geo, var_id) |>
-      mutate(value = scale(pre_value, center = TRUE, scale = TRUE))
+      res |>
+      group_by(var_id, geo) |>
+      mutate(value = scale(value, center = TRUE, scale = TRUE))
   }
 
+  # pivot to matrix
   res <-
     res |>
-    select(-pre_value) |>
     ungroup() |>
-    # pivot to matrix
     transmute(
       space_time = paste0(geo, "_", year, "-", quarter),
       var_id,
@@ -227,6 +229,9 @@ scale_cube <- function(detrended_tbl, scaling_grouping) {
     pivot_wider(names_from = var_id, values_from = value) |>
     column_to_rownames("space_time") |>
     as.matrix()
+
+  res[is.na(res)] <- 0
+
   res
 }
 
