@@ -91,7 +91,8 @@ ui <- function(request) {
           ),
           selected = c("quarterly", "annual")
         ),
-        selectInput("scaling_grouping", "z-scaling grouping", choices = c("feature", "feature and region"), selected = "feature")
+        selectInput("scaling_grouping", "z-scaling grouping", choices = c("feature", "feature and region"), selected = "feature"),
+        bookmarkButton()
       ),
       fluidRow(
         column(6, selectInput(
@@ -159,10 +160,6 @@ server <- function(input, output, session) {
   ) |>
     showNotification(duration = Inf, type = "warning")
 
-  observe({
-    reactiveValuesToList(input)
-    session$doBookmark()
-  })
   onBookmarked(updateQueryString)
 
   observeEvent(
