@@ -46,6 +46,7 @@ ui <- page_navbar(
     bootswatch = "minty",
     navbar_bg = primary_color,
     primary = primary_color,
+    secondary = secondary_color,
     fg = "black",
     bg = "white"
   ),
