@@ -81,7 +81,7 @@ ui <- page_navbar(
       checkboxGroupInput(
         "detrend_methods", "Detrend methods",
         choices = c(
-          "Remove quarterly effect" = "quarter",
+          "Remove quarterly effect" = "quarterly",
           "Remove annual effect" = "annual",
           "Remove spatial effect" = "spatial"
         ),

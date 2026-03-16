@@ -157,7 +157,7 @@ resample_space_to_nuts3 <- function(data, nuts3_regions, eurostat_regions) {
 }
 
 normalize_cube <- function(
-  cube_tbl, global_stats, annual_stats, quarterly_stats,
+  cube_tbl, global_stats, annual_stats, quarterly_stats, geo_stats,
   detrended_features, other_features, detrend_methods, scaling_grouping
 ) {
   #' Detrend and scale features

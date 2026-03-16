@@ -221,5 +221,5 @@ list(
         mutate(geo_mean = geo_mean - global_mean) |>
         select(-global_mean)
     }
-  ),
+  )
 )
