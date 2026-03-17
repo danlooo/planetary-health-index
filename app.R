@@ -131,7 +131,7 @@ ui <- function(request) {
         sliderInput("selected_year", "Year:", min = 2001, max = 2021, value = 2021),
         selectInput("selected_quarter", "Quarter:", choices = c("Q1", "Q2", "Q3", "Q4"))
       ),
-      withSpinner(plotOutput("map_plt", height = "1000px"))
+      plotOutput("map_plt", height = "1000px")
     ),
     nav_panel(
       title = "Temporal",
