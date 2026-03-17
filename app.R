@@ -62,6 +62,9 @@ ui <- function(request) {
         padding-left: 1.5em;
         padding-right: 1.5em;
       }
+      .btn {
+        max-width: 500px
+      }
     "))
     ),
     nav_panel(
@@ -92,7 +95,6 @@ ui <- function(request) {
           selected = c("quarterly", "annual")
         ),
         selectInput("scaling_grouping", "z-scaling grouping", choices = c("feature", "feature and region"), selected = "feature"),
-        bookmarkButton()
       ),
       fluidRow(
         column(6, selectInput(
@@ -149,6 +151,14 @@ ui <- function(request) {
           withSpinner(plotOutput("trajectories_rev_plt", height = "800px"))
         )
       )
+    ),
+    nav_panel(
+      title = "Download",
+      h3("Download"),
+      p("Save inputs by updating the state in the URL:"),
+      bookmarkButton(),
+      p("Download inputs and most important plots"),
+      downloadButton("download_plots", "Download")
     )
   )
 }
@@ -160,7 +170,11 @@ server <- function(input, output, session) {
   ) |>
     showNotification(duration = Inf, type = "warning")
 
-  onBookmarked(updateQueryString)
+  current_url <- reactiveVal()
+  onBookmarked(function(state) {
+    updateQueryString(state)
+    state |> current_url()
+  })
 
   observeEvent(
     list(input$x_sphere, input$y_sphere),
@@ -431,6 +445,29 @@ server <- function(input, output, session) {
       theme(legend.position = "bottom", legend.direction = "vertical") +
       labs(y = "z-score", linetype = "Feature", color = "Region")
   })
+
+  output$download_plots <- downloadHandler(
+    filename = "planetary-health-index.zip",
+    content = function(zip_path) {
+      session$doBookmark() # save state to go back afetr download
+
+      tmp_dir <- tempfile("bundle_")
+      dir.create(tmp_dir)
+      on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
+
+      inputs_file <- file.path(tmp_dir, "inputs.yml")
+      inputs <- reactiveValuesToList(input)
+      inputs[["url"]] <- current_url()
+      yaml::write_yaml(inputs, inputs_file)
+
+
+      utils::zip(
+        zipfile = zip_path,
+        files = c(inputs_file),
+        flags = "-j" # removes directory paths inside the zip
+      )
+    }
+  )
 }
 
 shinyApp(ui = ui, server = server, enableBookmarking = "server")
