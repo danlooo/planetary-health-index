@@ -153,8 +153,8 @@ ui <- function(request) {
       )
     ),
     nav_panel(
-      title = "Download",
-      h3("Download"),
+      title = "Save",
+      h3("Save"),
       p("Save inputs by updating the state in the URL:"),
       bookmarkButton(),
       p("Download inputs and most important plots. May take a minute to process results."),
