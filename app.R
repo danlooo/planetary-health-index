@@ -157,7 +157,7 @@ ui <- function(request) {
       h3("Download"),
       p("Save inputs by updating the state in the URL:"),
       bookmarkButton(),
-      p("Download inputs and most important plots"),
+      p("Download inputs and most important plots. May take a minute to process results."),
       downloadButton("download_plots", "Download")
     )
   )
@@ -266,52 +266,54 @@ server <- function(input, output, session) {
     renderTable() |>
     bindCache(1)
 
+  scores_plt <- reactive({
+    inner_join(
+      cca_fwd()$scores |> select(fwd = CCA1, geo, time),
+      cca_rev()$scores |> select(rev = CCA1, geo, time)
+    ) |>
+      unite("name", geo, time) |>
+      ggplot(aes(fwd, rev)) +
+      # geom_density2d_filled() +
+      scale_fill_grey(start = 1, end = 0, t) +
+      geom_abline(color = dark_gray_color) +
+      geom_point(
+        data = highlighted_data(),
+        color = primary_color,
+        alpha = 0.3,
+        size = 1
+      ) +
+      geom_density_2d(
+        data = highlighted_data(),
+        color = primary_color
+      ) +
+      coord_fixed() +
+      guides(fill = "none") +
+      labs(x = paste0(input$x_sphere, "-", input$y_sphere), y = paste0(input$y_sphere, "-", input$x_sphere))
+  })
+
   output$scores_plt <- renderPlot(
     bg = "transparent",
-    {
-      inner_join(
-        cca_fwd()$scores |> select(fwd = CCA1, geo, time),
-        cca_rev()$scores |> select(rev = CCA1, geo, time)
-      ) |>
-        unite("name", geo, time) |>
-        ggplot(aes(fwd, rev)) +
-        # geom_density2d_filled() +
-        scale_fill_grey(start = 1, end = 0, t) +
-        geom_abline(color = dark_gray_color) +
-        geom_point(
-          data = highlighted_data(),
-          color = primary_color,
-          alpha = 0.3,
-          size = 1
-        ) +
-        geom_density_2d(
-          data = highlighted_data(),
-          color = primary_color
-        ) +
-        coord_fixed() +
-        guides(fill = "none") +
-        labs(x = paste0(input$x_sphere, "-", input$y_sphere), y = paste0(input$y_sphere, "-", input$x_sphere))
-    }
+    scores_plt()
   ) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str, input$detrend_methods, input$scaling_grouping)
 
-  output$loadings_plt <- renderPlot(
-    {
-      bind_rows(
-        cca_fwd()$loadings,
-        cca_rev()$loadings
-      ) |>
-        left_join(features) |>
-        ggplot(aes(label, CCA1)) +
-        geom_bar(stat = "identity") +
-        geom_hline(yintercept = 0) +
-        facet_grid(rows = vars(sphere), scales = "free", space = "free") +
-        coord_flip() +
-        labs(x = "Feature")
-    },
-    height = function() length(input$used_features) * 15 + 50
-  )
+  loadings_plt <- reactive({
+    bind_rows(
+      cca_fwd()$loadings,
+      cca_rev()$loadings
+    ) |>
+      left_join(features) |>
+      ggplot(aes(label, CCA1)) +
+      geom_bar(stat = "identity") +
+      geom_hline(yintercept = 0) +
+      facet_grid(rows = vars(sphere), scales = "free", space = "free") +
+      coord_flip() +
+      labs(x = "Feature")
+  })
 
-  output$trajectories_fwd_plt <- renderPlot({
+  output$loadings_plt <- renderPlot(loadings_plt(), height = function() length(input$used_features) * 15 + 50)
+
+
+  trajectories_fwd_plt <- reactive({
     cca_fwd()$scores |>
       left_join(nuts3_regions |> rename(geo_label = label)) |>
       arrange(geo, time) |>
@@ -324,12 +326,14 @@ server <- function(input, output, session) {
       coord_fixed() +
       guides(fill = "none") +
       labs(title = paste0(input$x_sphere, "-", input$y_sphere), color = "Region")
-  }) |> bindCache(
+  })
+
+  output$trajectories_fwd_plt <- renderPlot(trajectories_fwd_plt()) |> bindCache(
     input$x_sphere, input$y_sphere, input$used_features, input$detrended_features,
     input$selected_geo, input$detrend_methods, input$scaling_grouping
   )
 
-  output$trajectories_rev_plt <- renderPlot({
+  trajectories_rev_plt <- reactive({
     cca_rev()$scores |>
       left_join(nuts3_regions |> rename(geo_label = label)) |>
       arrange(geo, time) |>
@@ -342,7 +346,9 @@ server <- function(input, output, session) {
       coord_fixed() +
       guides(fill = "none") +
       labs(title = paste0(input$y_sphere, "-", input$x_sphere), color = "Region")
-  }) |> bindCache(
+  })
+
+  output$trajectories_rev_plt <- renderPlot(trajectories_rev_plt()) |> bindCache(
     input$x_sphere, input$y_sphere, input$used_features, input$detrended_features,
     input$selected_geo, input$detrend_methods, input$scaling_grouping
   )
@@ -460,10 +466,21 @@ server <- function(input, output, session) {
       inputs[["url"]] <- current_url()
       yaml::write_yaml(inputs, inputs_file)
 
+      scores_file <- file.path(tmp_dir, "scores.png")
+      ggsave(scores_file, plot = scores_plt())
+
+      loadings_file <- file.path(tmp_dir, "loadings.png")
+      ggsave(loadings_file, plot = loadings_plt(), height = 20, width = 20)
+
+      trajectories_fwd_file <- file.path(tmp_dir, "trajectories_fwd.png")
+      ggsave(trajectories_fwd_file, plot = trajectories_fwd_plt())
+
+      trajectories_rev_file <- file.path(tmp_dir, "trajectories_rev.png")
+      ggsave(trajectories_rev_file, plot = trajectories_rev_plt())
 
       utils::zip(
         zipfile = zip_path,
-        files = c(inputs_file),
+        files = c(scores_file, loadings_file, inputs_file, trajectories_fwd_file, trajectories_rev_file),
         flags = "-j" # removes directory paths inside the zip
       )
     }
