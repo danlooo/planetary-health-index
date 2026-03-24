@@ -227,6 +227,7 @@ normalize_cube <- function(
       var_id,
       value = replace_na(value, 0)
     ) |>
+    distinct(space_time, var_id, .keep_all = TRUE) |>
     pivot_wider(names_from = var_id, values_from = value) |>
     column_to_rownames("space_time") |>
     as.matrix()
