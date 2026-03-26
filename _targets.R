@@ -36,7 +36,8 @@ list(
         bind_rows(features_csv) |>
         mutate(
           sphere = replace_na(sphere, "socio"),
-          label = ifelse(is.na(label), var_id, label)
+          label = ifelse(is.na(label), var_id, label),
+          description = ifelse(is.na(description), code, description)
         ) |>
         filter(var_id %in% cube_tbl$var_id) |>
         arrange(sphere, var_id)
