@@ -28,6 +28,7 @@ tar_load(global_stats)
 tar_load(annual_stats)
 tar_load(quarterly_stats)
 tar_load(geo_stats)
+tar_load(preselected_features)
 
 theme_set(
   theme_classic(base_size = 18) + theme(
@@ -99,12 +100,12 @@ ui <- function(request) {
       fluidRow(
         column(6, selectInput(
           "used_features", "Use features",
-          choices = features$label, selected = features$label, multiple = TRUE,
+          choices = features$label, selected = preselected_features, multiple = TRUE,
           width = "100%"
         )),
         column(6, selectInput(
           "detrended_features", "Detrend features",
-          choices = features$label, selected = features$label, multiple = TRUE,
+          choices = features$label, selected = preselected_features, multiple = TRUE,
           width = "100%"
         ))
       ),
@@ -183,29 +184,42 @@ server <- function(input, output, session) {
         showNotification("Please select different spheres!", type = "error")
       }
 
-      features <-
+      possible_features <-
         features |>
         filter(sphere %in% c(input$x_sphere, input$y_sphere)) |>
         pull(label)
 
+      preselected_features <-
+        features |>
+        filter(var_id %in% preselected_features) |>
+        pull(label) |>
+        intersect(possible_features)
+
       updateSelectInput(
         session,
         "used_features",
-        choices = features,
-        selected = features
+        choices = possible_features,
+        selected = preselected_features
+      )
+
+      updateSelectInput(
+        session,
+        "detrended_features",
+        choices = possible_features,
+        selected = preselected_features
       )
 
       updateSelectInput(
         session,
         "selected_feature",
-        choices = c("fwd_CCA1", "rev_CCA1", "fwd_CCA2", "rev_CCA2") |> append(features),
+        choices = c("fwd_CCA1", "rev_CCA1", "fwd_CCA2", "rev_CCA2") |> append(possible_features),
         selected = "fwd_CCA1"
       )
 
       updateSelectInput(
         session,
         "selected_feature_for_timeseries",
-        choices = c("fwd_CCA1", "rev_CCA1", "fwd_CCA2", "rev_CCA2") |> append(features),
+        choices = c("fwd_CCA1", "rev_CCA1", "fwd_CCA2", "rev_CCA2") |> append(possible_features),
         selected = "fwd_CCA1"
       )
     }
@@ -218,7 +232,7 @@ server <- function(input, output, session) {
         session,
         "detrended_features",
         choices = input$used_features,
-        selected = intersect(input$detrended_features, input$used_features)
+        selected = input$used_features
       )
     }
   )

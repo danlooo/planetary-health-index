@@ -221,5 +221,42 @@ list(
         mutate(geo_mean = geo_mean - global_mean) |>
         select(-global_mean)
     }
+  ),
+  tar_target(
+    name = preselected_features,
+    command = {
+      other_features <-
+        features_csv |>
+        filter(sphere != "socio") |>
+        pull(var_id) |>
+        c("tp")
+
+      socio_cube <-
+        cube_tbl |>
+        filter(!var_id %in% other_features) |>
+        unite("space_time", geo, quarter, year) |>
+        pivot_wider(names_from = var_id, values_from = value) |>
+        column_to_rownames("space_time")
+
+      socio_cube[is.na(socio_cube)] <- 0
+      feature_cors <- cor(socio_cube, method = "pearson")
+      feature_clust <- hclust(as.dist(1 - feature_cors))
+      feature_clusters <- cutree(feature_clust, h = 0.5)
+
+      preselected_socio_features <-
+        features |>
+        filter(!var_id %in% other_features) |>
+        mutate(cluster = map_int(var_id, ~ feature_clusters[.x])) |>
+        group_by(cluster) |>
+        # random shuffling
+        sample_frac(1, replace = FALSE) |>
+        # prefer pooled features
+        arrange(-str_detect(label, "TOTAL"), -str_detect(label, "T")) |>
+        slice(1) |>
+        ungroup() |>
+        pull(var_id)
+
+      c(preselected_socio_features, other_features)
+    }
   )
 )
