@@ -160,6 +160,15 @@ ui <- function(request) {
       bookmarkButton(),
       p("Download inputs and most important plots. May take a minute to process results."),
       downloadButton("download_plots", "Download")
+    ),
+    nav_item(
+      tags$a(
+        href = "https://www.bgc-jena.mpg.de/2299/imprint",
+        "Imprint",
+        target = "_blank",
+        class = "nav-link",
+        rel = "noopener noreferrer"
+      )
     )
   )
 }
@@ -275,12 +284,11 @@ server <- function(input, output, session) {
   cca_rev <- reactive(calculate_cca(processed_cube(), y_features(), x_features())) |>
     bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$detrend_methods, input$scaling_grouping)
 
-  output$features_table <-
+  output$features_table <- renderTable(
     features |>
-    select(sphere, label, description) |>
-    arrange(sphere, label) |>
-    renderTable() |>
-    bindCache(1)
+      select(sphere, label, description) |>
+      arrange(sphere, label)
+  ) |> bindCache(1)
 
   scores_plt <- reactive({
     inner_join(
