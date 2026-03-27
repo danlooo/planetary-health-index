@@ -28,7 +28,7 @@ tar_load(global_stats)
 tar_load(annual_stats)
 tar_load(quarterly_stats)
 tar_load(geo_stats)
-tar_load(preselected_features)
+all_preselected_features <- tar_read(preselected_features)
 
 theme_set(
   theme_classic(base_size = 18) + theme(
@@ -100,12 +100,12 @@ ui <- function(request) {
       fluidRow(
         column(6, selectInput(
           "used_features", "Use features",
-          choices = features$label, selected = preselected_features, multiple = TRUE,
+          choices = features$label, selected = all_preselected_features, multiple = TRUE,
           width = "100%"
         )),
         column(6, selectInput(
           "detrended_features", "Detrend features",
-          choices = features$label, selected = preselected_features, multiple = TRUE,
+          choices = features$label, selected = all_preselected_features, multiple = TRUE,
           width = "100%"
         ))
       ),
@@ -180,60 +180,57 @@ server <- function(input, output, session) {
   ) |>
     showNotification(duration = Inf, type = "warning")
 
-  current_url <- reactiveVal()
-  onBookmarked(function(state) {
-    updateQueryString(state)
-    state |> current_url()
-  })
-
   observeEvent(
     list(input$x_sphere, input$y_sphere),
     {
       if (input$x_sphere == input$y_sphere) {
         showNotification("Please select different spheres!", type = "error")
       }
+    }
+  )
 
-      possible_features <-
-        features |>
-        filter(sphere %in% c(input$x_sphere, input$y_sphere)) |>
-        pull(label)
+  current_url <- reactiveVal()
+  onBookmarked(function(state) {
+    updateQueryString(state)
+    state |> current_url()
+  })
 
-      preselected_features <-
-        features |>
-        filter(var_id %in% preselected_features) |>
-        pull(label) |>
-        intersect(possible_features)
+  # features of the selected spheres
+  possible_features <- reactive({
+    features |>
+      filter(sphere %in% c(input$x_sphere, input$y_sphere)) |>
+      pull(label)
+  })
 
+  # usful subset of uncorrelated possible features
+  preselected_features <- reactive({
+    features |>
+      filter(var_id %in% all_preselected_features) |>
+      pull(label) |>
+      intersect(possible_features())
+  })
+
+  # Set feature choices to possible ones
+  observeEvent(
+    eventExpr = list(input$x_sphere, input$y_sphere),
+    handlerExpr = {
       updateSelectInput(
         session,
         "used_features",
-        choices = possible_features,
-        selected = preselected_features
+        choices = possible_features(),
+        selected = preselected_features()
       )
 
       updateSelectInput(
         session,
         "detrended_features",
-        choices = possible_features,
-        selected = preselected_features
-      )
-
-      updateSelectInput(
-        session,
-        "selected_feature",
-        choices = c("fwd_CCA1", "rev_CCA1", "fwd_CCA2", "rev_CCA2") |> append(possible_features),
-        selected = "fwd_CCA1"
-      )
-
-      updateSelectInput(
-        session,
-        "selected_feature_for_timeseries",
-        choices = c("fwd_CCA1", "rev_CCA1", "fwd_CCA2", "rev_CCA2") |> append(possible_features),
-        selected = "fwd_CCA1"
+        choices = possible_features(),
+        selected = preselected_features()
       )
     }
   )
 
+  # allow to only visualize features used in actual analysis
   observeEvent(
     input$used_features,
     {
@@ -242,6 +239,20 @@ server <- function(input, output, session) {
         "detrended_features",
         choices = input$used_features,
         selected = input$used_features
+      )
+
+      updateSelectInput(
+        session,
+        "selected_feature",
+        choices = c("fwd_CCA1", "rev_CCA1", "fwd_CCA2", "rev_CCA2") |> append(input$used_features),
+        selected = "fwd_CCA1"
+      )
+
+      updateSelectInput(
+        session,
+        "selected_feature_for_timeseries",
+        choices = c("fwd_CCA1", "rev_CCA1", "fwd_CCA2", "rev_CCA2") |> append(input$used_features),
+        selected = "fwd_CCA1"
       )
     }
   )
