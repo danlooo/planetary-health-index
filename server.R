@@ -195,7 +195,7 @@ server <- function(input, output, session) {
 
     trajectories_rev_plt <- reactive({
         cca_rev()$scores |>
-            left_join(nuts3_regions |> rename(geo_label = label)) |>
+            left_join(nuts3_regions |> rename(geo_label = label), by = join_by(geo)) |>
             arrange(geo, time) |>
             ggplot(aes(CCA1, CCA2)) +
             geom_path(
@@ -289,6 +289,7 @@ server <- function(input, output, session) {
             inner_join(
                 cca_fwd()$scores |> select(fwd_CCA1 = CCA1, fwd_CCA2 = CCA2, geo, time),
                 cca_rev()$scores |> select(rev_CCA1 = CCA1, rev_CCA2 = CCA2, geo, time),
+                by = join_by(geo, time)
             ) |>
             filter(geo %in% selected_geos) |>
             pivot_longer(cols = -c(geo, time), names_to = "var_id", values_to = "value")
@@ -300,8 +301,8 @@ server <- function(input, output, session) {
 
         cur_data <-
             bind_rows(cur_feature_data, cur_cca_data) |>
-            left_join(features |> bind_rows(cca_features)) |>
-            left_join(nuts3_regions |> rename(geo_label = label)) |>
+            left_join(features |> bind_rows(cca_features), by = join_by(var_id)) |>
+            left_join(nuts3_regions |> rename(geo_label = label), by = join_by(geo)) |>
             filter(label %in% input$selected_feature_for_timeseries) |>
             mutate(time = yq(time))
 
