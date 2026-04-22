@@ -11,6 +11,10 @@ ui <- function(request) {
         ),
         tags$head(
             tags$style(HTML("
+      html {
+        max-width: 120rem;
+        margin: 0 auto;
+      }
       h3 {
         color: #006c66
       }
