@@ -177,6 +177,7 @@ server <- function(input, output, session) {
         cca_fwd()$scores |>
             left_join(nuts3_regions |> rename(geo_label = label)) |>
             arrange(geo, time) |>
+            distinct(geo, CCA1, CCA2, .keep_all=TRUE) |>
             ggplot(aes(CCA1, CCA2)) +
             geom_path(
                 data = ~ filter(.x, geo_label %in% input$selected_geo),
@@ -197,6 +198,7 @@ server <- function(input, output, session) {
         cca_rev()$scores |>
             left_join(nuts3_regions |> rename(geo_label = label), by = join_by(geo)) |>
             arrange(geo, time) |>
+            distinct(geo, CCA1, CCA2, .keep_all=TRUE) |>
             ggplot(aes(CCA1, CCA2)) +
             geom_path(
                 data = ~ filter(.x, geo_label %in% input$selected_geo),
