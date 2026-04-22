@@ -23,49 +23,52 @@ ui <- function(request) {
       }
     "))
         ),
+        sidebar = sidebar(
+            radioButtons(
+                "x_sphere", "Source sphere",
+                choices = spheres, selected = "bio"
+            ),
+            radioButtons(
+                "y_sphere", "Target sphere",
+                choices = spheres, selected = "socio"
+            ),
+            checkboxGroupInput(
+                "detrend_methods", "Detrend methods",
+                choices = c(
+                    "Remove quarterly effect" = "quarterly",
+                    "Remove annual effect" = "annual",
+                    "Remove spatial effect" = "spatial"
+                ),
+                selected = c("quarterly", "annual")
+            ),
+            selectInput("scaling_grouping", "z-scaling grouping", choices = c("feature", "feature and region"), selected = "feature")
+        ),
         nav_panel(
-            title = "Input",
+            title = "Home",
             div(paste0(
                 "The Planetary Health Index φ is a concept to explain linear relationships of a set of features or spheres using another one, ",
                 "e.g., to model socioeconomic features using biological measurements. Hereby, Canonical Correlation Analysis is used ",
                 "to model a set of related features holistically, whereas traditional Pearson Correlation focuses on the relationship ",
                 "between two individual features. Data was collected from Eurostat, ERA5, and FluxCom."
+            ))
+        ),
+        nav_panel(
+          title = "Features",
+          h3("Used Features"),
+          fluidRow(
+            column(6, selectInput(
+              "used_features", "Use features",
+              choices = features$label, selected = all_preselected_features, multiple = TRUE,
+              width = "100%"
             )),
-            h3("Input"),
-            fluidRow(
-                radioButtons(
-                    "x_sphere", "Source sphere",
-                    choices = spheres, selected = "bio"
-                ),
-                radioButtons(
-                    "y_sphere", "Target sphere",
-                    choices = spheres, selected = "socio"
-                ),
-                checkboxGroupInput(
-                    "detrend_methods", "Detrend methods",
-                    choices = c(
-                        "Remove quarterly effect" = "quarterly",
-                        "Remove annual effect" = "annual",
-                        "Remove spatial effect" = "spatial"
-                    ),
-                    selected = c("quarterly", "annual")
-                ),
-                selectInput("scaling_grouping", "z-scaling grouping", choices = c("feature", "feature and region"), selected = "feature"),
-            ),
-            fluidRow(
-                column(6, selectInput(
-                    "used_features", "Use features",
-                    choices = features$label, selected = all_preselected_features, multiple = TRUE,
-                    width = "100%"
-                )),
-                column(6, selectInput(
-                    "detrended_features", "Detrend features",
-                    choices = features$label, selected = all_preselected_features, multiple = TRUE,
-                    width = "100%"
-                ))
-            ),
-            h3("Features"),
-            tableOutput("features_table")
+            column(6, selectInput(
+              "detrended_features", "Detrend features",
+              choices = features$label, selected = all_preselected_features, multiple = TRUE,
+              width = "100%"
+            ))
+          ),
+          h3("Available features"),
+          tableOutput("features_table")
         ),
         nav_panel(
             title = "Spheres",
