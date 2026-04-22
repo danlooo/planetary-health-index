@@ -80,7 +80,7 @@ ui <- function(request) {
             fluidRow(
                 textInput(
                     "highlight_str", "Highlight NUTS region or year",
-                    value = "BE"
+                    value = ""
                 )
             ),
             withSpinner(plotOutput("scores_plt")),

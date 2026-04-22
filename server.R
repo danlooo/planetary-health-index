@@ -86,9 +86,14 @@ server <- function(input, output, session) {
         }
     )
 
-    highlighted_data <- reactive(
-        ~ filter(.x, str_detect(name, input$highlight_str))
-    )
+    highlighted_data <- reactive({
+      if(input$highlight_str != "") {
+        ~ filter(.x, str_detect(name, input$highlight_str)) 
+      } else {
+        # highlight nothing
+        ~ filter(.x, FALSE)
+      }
+    })
 
     x_features <- reactive({
         features |>
@@ -138,8 +143,6 @@ server <- function(input, output, session) {
         ) |>
             unite("name", geo, time) |>
             ggplot(aes(fwd, rev)) +
-            # geom_density2d_filled() +
-            scale_fill_grey(start = 1, end = 0, t) +
             geom_abline(color = dark_gray_color) +
             geom_point(
                 data = highlighted_data(),
@@ -149,11 +152,16 @@ server <- function(input, output, session) {
             ) +
             geom_density_2d(
                 data = highlighted_data(),
-                color = primary_color
+                mapping = aes(color = "highlighted"),
             ) +
+            stat_density_2d(contour = TRUE, mapping = aes(color = "all")) +
+            scale_color_manual(values = c("all" = "darkgrey", "highlighted" = primary_color)) +
             coord_fixed() +
-            guides(fill = "none") +
-            labs(x = paste0(input$x_sphere, "-", input$y_sphere), y = paste0(input$y_sphere, "-", input$x_sphere))
+            labs(
+              x = paste0(input$x_sphere, "-", input$y_sphere),
+              y = paste0(input$y_sphere, "-", input$x_sphere),
+              color = "Sample group"
+            )
     })
 
     output$scores_plt <- renderPlot(
