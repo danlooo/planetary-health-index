@@ -19,12 +19,16 @@ server <- function(input, output, session) {
         updateQueryString(state)
         state |> current_url()
     })
+    
+    hidden_features <- c("H", "_foo")
+    
 
     # features of the selected spheres
     possible_features <- reactive({
         features |>
             filter(sphere %in% c(input$x_sphere, input$y_sphere)) |>
-            pull(label)
+            pull(label) |>
+            setdiff(hidden_features)
     })
 
     # usful subset of uncorrelated possible features
@@ -120,11 +124,12 @@ server <- function(input, output, session) {
     cca_rev <- reactive(calculate_cca(processed_cube(), y_features(), x_features())) |>
         bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$detrend_methods, input$scaling_grouping)
 
-    output$features_table <- renderTable(
+    output$features_table <- renderTable({
         features |>
+            filter(! var_id %in% hidden_features) |>
             select(sphere, label, description) |>
             arrange(sphere, label)
-    ) |> bindCache(1)
+    }) |> bindCache(1)
 
     scores_plt <- reactive({
         inner_join(
