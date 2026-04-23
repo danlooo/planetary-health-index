@@ -29,16 +29,20 @@ list(
       pull(space_time)
   ),
   tar_file_read(features_csv, "data/features.csv", read_csv(file = !!.x)),
+  tar_file_read(eurostat_resolutions, "data/eurostat-resolutions.csv", read_csv(file = !!.x)),
   tar_target(
     name = features,
     command = {
       eurostat_metadata |>
         full_join(features_csv) |>
+        left_join(eurostat_resolutions) |>
         mutate(
           sphere = replace_na(sphere, "socio"),
           source = replace_na(source, "Eurostat"),
           label = ifelse(is.na(label), var_id, label),
-          description = ifelse(is.na(description), str_glue("from Eurostat dataset {code}"), description)
+          description = ifelse(is.na(description), str_glue("from Eurostat dataset {code}"), description),
+          temporal_resolution = replace_na(temporal_resolution, "sub monthly"),
+          spatial_resolution = replace_na(spatial_resolution, "sub NUTS 3"),
         ) |>
         filter(var_id %in% cube_tbl$var_id) |>
         arrange(sphere, var_id)

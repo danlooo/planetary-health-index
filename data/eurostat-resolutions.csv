@@ -1,0 +1,14 @@
+code,temporal_resolution,spatial_resolution
+demo_r_d3dens,annual,NUTS 3
+nama_10r_3gdp,annual,NUTS 3
+nama_10r_2gvagr,annual,NUTS 2
+nama_10r_3gva,annual,NUTS 3
+nama_10r_2gfcf,annual,NUTS 2
+nama_10r_2emhrw,annual,NUTS 2
+edat_lfse_04,annual,NUTS 2
+lfst_r_lfu3pers,annual,NUTS 2
+nama_10_nfa_bs,annual,NUTS 0
+teicp010,monthly,NUTS 0
+teicp250,monthly,NUTS 0
+ilc_di11,annual,NUTS 0
+ilc_li02,annual,NUTS 0

@@ -132,7 +132,7 @@ server <- function(input, output, session) {
     output$features_table <- renderTable({
         features |>
             filter(!var_id %in% hidden_features) |>
-            select(sphere, label, source, description) |>
+            select(sphere, label, source, temporal_resolution, spatial_resolution, description) |>
             arrange(sphere, label)
     }) |> bindCache(1)
 
