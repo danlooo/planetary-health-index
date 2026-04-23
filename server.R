@@ -166,7 +166,7 @@ server <- function(input, output, session) {
                 x = paste0(input$x_sphere, "-", input$y_sphere),
                 y = paste0(input$y_sphere, "-", input$x_sphere),
                 color = "Sample group",
-                subtitle = paste0("Pearson r=", round(r, 3))
+                subtitle = paste0("Pearson r=", round(r, 2) |> abs())
             )
     })
 
