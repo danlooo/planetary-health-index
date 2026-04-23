@@ -137,11 +137,16 @@ server <- function(input, output, session) {
     }) |> bindCache(1)
 
     scores_plt <- reactive({
-        inner_join(
-            cca_fwd()$scores |> select(fwd = CCA1, geo, time),
-            cca_rev()$scores |> select(rev = CCA1, geo, time)
-        ) |>
-            unite("name", geo, time) |>
+        data <-
+            inner_join(
+                cca_fwd()$scores |> select(fwd = CCA1, geo, time),
+                cca_rev()$scores |> select(rev = CCA1, geo, time)
+            ) |>
+            unite("name", geo, time)
+
+        r <- cor.test(data$fwd, data$rev, method = "pearson")$estimate
+
+        data |>
             ggplot(aes(fwd, rev)) +
             geom_abline(color = dark_gray_color) +
             geom_point(
@@ -160,7 +165,8 @@ server <- function(input, output, session) {
             labs(
                 x = paste0(input$x_sphere, "-", input$y_sphere),
                 y = paste0(input$y_sphere, "-", input$x_sphere),
-                color = "Sample group"
+                color = "Sample group",
+                subtitle = paste0("Pearson r=", round(r, 3))
             )
     })
 
