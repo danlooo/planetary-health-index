@@ -92,7 +92,7 @@ ui <- function(request) {
                 value = ""
               )
             ),
-            withSpinner(plotOutput("scores_plt")),
+            withSpinner(plotOutput("scores_plt", height = "800px")),
             h3("Loadings between spheres"),
             fluidRow(
               withSpinner(plotOutput("loadings_cca1_fwd_plt")),
