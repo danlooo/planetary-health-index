@@ -19,9 +19,9 @@ server <- function(input, output, session) {
         updateQueryString(state)
         state |> current_url()
     })
-    
+
     hidden_features <- c("H", "_foo")
-    
+
 
     # features of the selected spheres
     possible_features <- reactive({
@@ -87,12 +87,12 @@ server <- function(input, output, session) {
     )
 
     highlighted_data <- reactive({
-      if(input$highlight_str != "") {
-        ~ filter(.x, str_detect(name, input$highlight_str)) 
-      } else {
-        # highlight nothing
-        ~ filter(.x, FALSE)
-      }
+        if (input$highlight_str != "") {
+            ~ filter(.x, str_detect(name, input$highlight_str))
+        } else {
+            # highlight nothing
+            ~ filter(.x, FALSE)
+        }
     })
 
     x_features <- reactive({
@@ -131,7 +131,7 @@ server <- function(input, output, session) {
 
     output$features_table <- renderTable({
         features |>
-            filter(! var_id %in% hidden_features) |>
+            filter(!var_id %in% hidden_features) |>
             select(sphere, label, source, description) |>
             arrange(sphere, label)
     }) |> bindCache(1)
@@ -158,9 +158,9 @@ server <- function(input, output, session) {
             scale_color_manual(values = c("all" = "darkgrey", "highlighted" = primary_color)) +
             coord_fixed() +
             labs(
-              x = paste0(input$x_sphere, "-", input$y_sphere),
-              y = paste0(input$y_sphere, "-", input$x_sphere),
-              color = "Sample group"
+                x = paste0(input$x_sphere, "-", input$y_sphere),
+                y = paste0(input$y_sphere, "-", input$x_sphere),
+                color = "Sample group"
             )
     })
 
@@ -171,13 +171,13 @@ server <- function(input, output, session) {
 
     loadings_cca1_fwd_plt <- reactive(plot_loadings(cca_fwd()$loadings, "CCA1", "FWD CCA1 loading"))
     output$loadings_cca1_fwd_plt <- renderPlot(loadings_cca1_fwd_plt())
-    
+
     loadings_cca2_fwd_plt <- reactive(plot_loadings(cca_fwd()$loadings, "CCA2", "FWD CCA2 loading"))
     output$loadings_cca2_fwd_plt <- renderPlot(loadings_cca2_fwd_plt())
-    
+
     loadings_cca1_rev_plt <- reactive(plot_loadings(cca_rev()$loadings, "CCA1", "REV CCA1 loading"))
     output$loadings_cca1_rev_plt <- renderPlot(loadings_cca1_rev_plt())
-    
+
     loadings_cca2_rev_plt <- reactive(plot_loadings(cca_rev()$loadings, "CCA2", "REV CCA2 loading"))
     output$loadings_cca2_rev_plt <- renderPlot(loadings_cca2_rev_plt())
 
@@ -185,7 +185,7 @@ server <- function(input, output, session) {
         cca_fwd()$scores |>
             left_join(nuts3_regions |> rename(geo_label = label)) |>
             arrange(geo, time) |>
-            distinct(geo, CCA1, CCA2, .keep_all=TRUE) |>
+            distinct(geo, CCA1, CCA2, .keep_all = TRUE) |>
             ggplot(aes(CCA1, CCA2)) +
             geom_path(
                 data = ~ filter(.x, geo_label %in% input$selected_geo),
@@ -206,7 +206,7 @@ server <- function(input, output, session) {
         cca_rev()$scores |>
             left_join(nuts3_regions |> rename(geo_label = label), by = join_by(geo)) |>
             arrange(geo, time) |>
-            distinct(geo, CCA1, CCA2, .keep_all=TRUE) |>
+            distinct(geo, CCA1, CCA2, .keep_all = TRUE) |>
             ggplot(aes(CCA1, CCA2)) +
             geom_path(
                 data = ~ filter(.x, geo_label %in% input$selected_geo),
@@ -339,21 +339,21 @@ server <- function(input, output, session) {
 
             scores_file <- file.path(tmp_dir, "scores.png")
             ggsave(scores_file, plot = scores_plt())
-            
+
 
             loadings_cca1_fwd_file <- file.path(tmp_dir, "loadings_cca1_fwd.png")
             ggsave(loadings_cca1_fwd_file, plot = loadings_cca1_fwd_plt(), width = 18)
-            
+
             loadings_cca2_fwd_file <- file.path(tmp_dir, "loadings_cca2_fwd.png")
             ggsave(loadings_cca2_fwd_file, plot = loadings_cca2_fwd_plt(), width = 18)
-            
+
             loadings_cca1_rev_file <- file.path(tmp_dir, "loadings_cca1_rev.png")
             ggsave(loadings_cca1_rev_file, plot = loadings_cca1_rev_plt(), width = 18)
-            
+
             loadings_cca2_rev_file <- file.path(tmp_dir, "loadings_cca2_rev.png")
             ggsave(loadings_cca2_rev_file, plot = loadings_cca2_rev_plt(), width = 18)
 
-            
+
             trajectories_fwd_file <- file.path(tmp_dir, "trajectories_fwd.png")
             ggsave(trajectories_fwd_file, plot = trajectories_fwd_plt())
 
@@ -363,9 +363,9 @@ server <- function(input, output, session) {
             utils::zip(
                 zipfile = zip_path,
                 files = c(
-                  loadings_cca1_fwd_file, loadings_cca2_fwd_file, loadings_cca1_rev_file, loadings_cca2_rev_file,
-                  inputs_file, trajectories_fwd_file, trajectories_rev_file, scores_file
-                  ),
+                    loadings_cca1_fwd_file, loadings_cca2_fwd_file, loadings_cca1_rev_file, loadings_cca2_rev_file,
+                    inputs_file, trajectories_fwd_file, trajectories_rev_file, scores_file
+                ),
                 flags = "-j" # removes directory paths inside the zip
             )
         }
