@@ -11,6 +11,9 @@ ui <- function(request) {
         ),
         tags$head(
             tags$style(HTML("
+      .selectize-control.multi .selectize-input > .item {
+        border: 2px solid darkgrey !important;
+      }
       html {
         max-width: 120rem;
         margin: 0 auto;
@@ -45,7 +48,7 @@ ui <- function(request) {
                 ),
                 selected = c("quarterly", "annual")
             ),
-            selectInput("scaling_grouping", "z-scaling grouping", choices = c("feature", "feature and region"), selected = "feature")
+            selectInput("scaling_grouping", "z-scaling grouping", choices = c("feature", "feature and region"), selected = "feature"),
         ),
         nav_panel(
             title = "Home",
@@ -59,6 +62,7 @@ ui <- function(request) {
         nav_panel(
             title = "Features",
             h3("Used Features"),
+            p("Click on a feature item and press the delete key to remove it from the analysis. Click and start typing to add new features."),
             fluidRow(
                 column(6, selectInput(
                     "used_features", "Use features",
