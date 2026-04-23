@@ -178,7 +178,9 @@ quarterly_stats|stem|0244e61b894e3c4f|d569d1238c118b89|472bd51140eadc08|72102988
 annual_stats|stem|b9c85554331dfc58|2efa5cba3dff9f5f|472bd51140eadc08|1900002718||t20528.5743055556s|s51317b|51317|rds|local|vector|||0.589||
 geo_stats|stem|c44f0099d035c3df|41b1631bad05b7e6|472bd51140eadc08|1737247516||t20528.5743287037s|s578999b|578999|rds|local|vector|||1.208||
 preselected_features|stem|c41f58c7b016e62d|721698761f813e88|8d476454136ac81b|2113610651||t20538.6229769747s|s366b|366|rds|local|vector|||5.986||
-eurostat_file|stem|1370f06f92f0aebc|6a894374eb5950a6|2472ec2cc9ef7fd0|-263900638|data/eurostat-datacube.nc|t20565.5393150236s|s110237183b|110237183|file|local|vector|||16.651||
+eurostat_file|stem|1370f06f92f0aebc|6a894374eb5950a6|2472ec2cc9ef7fd0|-263900638|data/eurostat-datacube.nc|t20566.3306115252s|s110237183b|110237183|file|local|vector|||29.942||
+features_csv_file|stem|12ac90fd8ec3ba52|e5bafb09a7d0946e|2c530c1562a7fbd1|995110937|data/features.csv|t20566.3191299217s|s1517b|1517|file|local|vector|||0||
+features_csv|stem|d830b6278adf201f|0383e023ea641077|474509170b287f39|-2077478744||t20566.3336245942s|s1054b|1054|rds|local|vector|||0.081||
 calculate_cca|function|3a62dad968a52e61
 primary_color|object|092a5f65d4b3906d
 resample_space_to_nuts3|function|dca19a4479ae4a50
@@ -193,5 +195,4 @@ resample_time_to_quarter|function|88c41afa09c0b828
 light_gray_color|object|85009bc8ac4df8e9
 write_nc_tibble|function|8e3cf56968bf7460
 sphere_colors|object|1b3c78ef062c343b
-features_csv|stem|383623899ffe9e1e|5c2312a0c8251d11|2c530c1562a7fbd1|-2077478744||t20565.5407105922s|s1000b|1000|rds|local|vector|||0.091||
-features|stem|9c459913bd616fe3|e4925b5333f54d72|7f1c4d2cb4e82029|-477244766||t20565.540730563s|s2611b|2611|rds|local|vector|||0.467||
+features|stem|ed6533eec49f1b4b|5033447dba7874ec|f60478cebb5cef9e|-477244766||t20566.3355942716s|s2772b|2772|rds|local|vector|||0.48||

@@ -132,7 +132,7 @@ server <- function(input, output, session) {
     output$features_table <- renderTable({
         features |>
             filter(! var_id %in% hidden_features) |>
-            select(sphere, label, description) |>
+            select(sphere, label, source, description) |>
             arrange(sphere, label)
     }) |> bindCache(1)
 
@@ -175,11 +175,20 @@ server <- function(input, output, session) {
             cca_rev()$loadings
         ) |>
             left_join(features) |>
-            ggplot(aes(label, CCA1)) +
+            mutate(
+              value = abs(CCA1),
+              sign = map_chr(CCA1, ~ ifelse(sign(.x) == 1, "positive", "negative"))
+            ) |>
+            arrange(-value) |>
+            head(10) |>
+            mutate(label = fct_reorder(label, value)) |>
+            ggplot(aes(label, value, fill=sign)) +
             geom_bar(stat = "identity") +
             geom_hline(yintercept = 0) +
             facet_grid(rows = vars(sphere), scales = "free", space = "free") +
             coord_flip() +
+            scale_fill_manual(values = c("positive" = "black", "negative"= "darkgrey"))+
+            scale_y_continuous(expand = c(0,0)) +
             labs(x = "Feature")
     })
 
