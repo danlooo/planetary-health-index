@@ -1,0 +1,7 @@
+services:
+  planetary-health-index:
+    build:
+      context: .
+    image: danlooo/planetary-health-index
+    ports:
+      - "80:80"
