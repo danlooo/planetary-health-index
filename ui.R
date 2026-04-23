@@ -85,15 +85,21 @@ ui <- function(request) {
         ),
         nav_panel(
             title = "Spheres",
-            h3("Sphere relationships"),
+            h3("Scores between spheres"),
             fluidRow(
-                textInput(
-                    "highlight_str", "Highlight NUTS region or year",
-                    value = ""
-                )
+              textInput(
+                "highlight_str", "Highlight NUTS region or year",
+                value = ""
+              )
             ),
             withSpinner(plotOutput("scores_plt")),
-            withSpinner(plotOutput("loadings_plt"))
+            h3("Loadings between spheres"),
+            fluidRow(
+              withSpinner(plotOutput("loadings_cca1_fwd_plt")),
+              withSpinner(plotOutput("loadings_cca2_fwd_plt")),
+              withSpinner(plotOutput("loadings_cca1_rev_plt")),
+              withSpinner(plotOutput("loadings_cca2_rev_plt"))
+            )
         ),
         nav_panel(
             title = "Spatial",

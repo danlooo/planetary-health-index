@@ -169,31 +169,17 @@ server <- function(input, output, session) {
         scores_plt()
     ) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str, input$detrend_methods, input$scaling_grouping)
 
-    loadings_plt <- reactive({
-        bind_rows(
-            cca_fwd()$loadings,
-            cca_rev()$loadings
-        ) |>
-            left_join(features) |>
-            mutate(
-              value = abs(CCA1),
-              sign = map_chr(CCA1, ~ ifelse(sign(.x) == 1, "positive", "negative"))
-            ) |>
-            arrange(-value) |>
-            head(10) |>
-            mutate(label = fct_reorder(label, value)) |>
-            ggplot(aes(label, value, fill=sign)) +
-            geom_bar(stat = "identity") +
-            geom_hline(yintercept = 0) +
-            facet_grid(rows = vars(sphere), scales = "free", space = "free") +
-            coord_flip() +
-            scale_fill_manual(values = c("positive" = "black", "negative"= "darkgrey"))+
-            scale_y_continuous(expand = c(0,0)) +
-            labs(x = "Feature")
-    })
-
-    output$loadings_plt <- renderPlot(loadings_plt(), height = function() length(input$used_features) * 15 + 50)
-
+    loadings_cca1_fwd_plt <- reactive(plot_loadings(cca_fwd()$loadings, "CCA1", "FWD CCA1 loading"))
+    output$loadings_cca1_fwd_plt <- renderPlot(loadings_cca1_fwd_plt())
+    
+    loadings_cca2_fwd_plt <- reactive(plot_loadings(cca_fwd()$loadings, "CCA2", "FWD CCA2 loading"))
+    output$loadings_cca2_fwd_plt <- renderPlot(loadings_cca2_fwd_plt())
+    
+    loadings_cca1_rev_plt <- reactive(plot_loadings(cca_rev()$loadings, "CCA1", "REV CCA1 loading"))
+    output$loadings_cca1_rev_plt <- renderPlot(loadings_cca1_rev_plt())
+    
+    loadings_cca2_rev_plt <- reactive(plot_loadings(cca_rev()$loadings, "CCA2", "REV CCA2 loading"))
+    output$loadings_cca2_rev_plt <- renderPlot(loadings_cca2_rev_plt())
 
     trajectories_fwd_plt <- reactive({
         cca_fwd()$scores |>
@@ -353,10 +339,21 @@ server <- function(input, output, session) {
 
             scores_file <- file.path(tmp_dir, "scores.png")
             ggsave(scores_file, plot = scores_plt())
+            
 
-            loadings_file <- file.path(tmp_dir, "loadings.png")
-            ggsave(loadings_file, plot = loadings_plt(), height = 20, width = 20)
+            loadings_cca1_fwd_file <- file.path(tmp_dir, "loadings_cca1_fwd.png")
+            ggsave(loadings_cca1_fwd_file, plot = loadings_cca1_fwd_plt(), width = 18)
+            
+            loadings_cca2_fwd_file <- file.path(tmp_dir, "loadings_cca2_fwd.png")
+            ggsave(loadings_cca2_fwd_file, plot = loadings_cca2_fwd_plt(), width = 18)
+            
+            loadings_cca1_rev_file <- file.path(tmp_dir, "loadings_cca1_rev.png")
+            ggsave(loadings_cca1_rev_file, plot = loadings_cca1_rev_plt(), width = 18)
+            
+            loadings_cca2_rev_file <- file.path(tmp_dir, "loadings_cca2_rev.png")
+            ggsave(loadings_cca2_rev_file, plot = loadings_cca2_rev_plt(), width = 18)
 
+            
             trajectories_fwd_file <- file.path(tmp_dir, "trajectories_fwd.png")
             ggsave(trajectories_fwd_file, plot = trajectories_fwd_plt())
 
@@ -365,7 +362,10 @@ server <- function(input, output, session) {
 
             utils::zip(
                 zipfile = zip_path,
-                files = c(scores_file, loadings_file, inputs_file, trajectories_fwd_file, trajectories_rev_file),
+                files = c(
+                  loadings_cca1_fwd_file, loadings_cca2_fwd_file, loadings_cca1_rev_file, loadings_cca2_rev_file,
+                  inputs_file, trajectories_fwd_file, trajectories_rev_file, scores_file
+                  ),
                 flags = "-j" # removes directory paths inside the zip
             )
         }

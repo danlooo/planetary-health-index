@@ -11,6 +11,7 @@ library(eurostat)
 library(rnaturalearth)
 library(khroma)
 library(yaml)
+
 source("lib.R")
 
 shinyOptions(cache = cachem::cache_mem(max_size = 1e9))
