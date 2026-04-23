@@ -20,7 +20,7 @@ server <- function(input, output, session) {
         state |> current_url()
     })
 
-    hidden_features <- c("H", "_foo")
+    hidden_features <- c("q", "ST")
 
 
     # features of the selected spheres
