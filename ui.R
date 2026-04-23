@@ -48,7 +48,12 @@ ui <- function(request) {
                 ),
                 selected = c("quarterly", "annual")
             ),
-            selectInput("scaling_grouping", "z-scaling grouping", choices = c("feature", "feature and region"), selected = "feature"),
+            selectInput(
+              "scaling_grouping", "z-scaling grouping",
+              choices = c("feature", "feature and region"),
+              selected = "feature"
+            ),
+            p("Two CCAs will be performed: forward (fwd) from source to target sphere and reverse (rev) from target to the source sphere.")
         ),
         nav_panel(
             title = "Home",
