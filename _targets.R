@@ -33,7 +33,41 @@ list(
   tar_target(
     name = features,
     command = {
-      eurostat_metadata |>
+      # Extract actual PCA variable names from cube_tbl (dataset-specific PC names)
+      pca_var_ids <- cube_tbl |>
+        filter(str_detect(var_id, "_PC\\d+$")) |>
+        distinct(var_id) |>
+        arrange(var_id) |>
+        pull(var_id)
+
+      # Create features for PCA components with dataset-specific names
+      pca_features <- tibble(
+        sphere = "socio",
+        var_id = pca_var_ids
+      ) |>
+        mutate(
+          # Extract dataset code from var_id (e.g., "dataset_PC1" -> "dataset")
+          dataset_code = str_remove(var_id, "_PC[0-9]+$"),
+          pc_number = str_extract(var_id, "PC\\d+$")
+        ) |>
+        left_join(
+          eurostat_metadata |> select(code, unit) |> distinct(),
+          by = c("dataset_code" = "code")
+        ) |>
+        mutate(
+          source = "Eurostat",
+          label = paste0(
+            pc_number, " from ", dataset_code,
+            ifelse(is.na(unit), "", paste0(" (", unit, ")"))
+          ),
+          description = str_glue("Principal component from Eurostat dataset {dataset_code}"),
+          temporal_resolution = "sub monthly",
+          spatial_resolution = "sub NUTS 3"
+        ) |>
+        select(-dataset_code, -pc_number, -unit)
+
+      # Combine with non-socio features and arrange
+      pca_features |>
         full_join(features_csv) |>
         left_join(eurostat_resolutions) |>
         mutate(
@@ -109,10 +143,15 @@ list(
     command = {
       # entire data as normalized sorted tibble, e.g. for duckdb
 
-      # eurostat
+      # eurostat - perform PCA for each dataset code individually
       nc <- open.nc(eurostat_file)
-      res <- list()
+      eurostat_pca_results <- list()
+
       for (grp in grp.inq.nc(nc)$grp) {
+        grp_name <- grp.inq.nc(grp)$name
+        grp_res <- list()
+
+        # Collect all variables for this group/dataset code
         for (var_id in grp.inq.nc(grp)$varids) {
           mat <- var.get.nc(grp, var_id)
           # overwrite climate conventions, use quarters instead
@@ -123,13 +162,52 @@ list(
           cur_res <-
             as_tibble(mat, rownames = "time") |>
             pivot_longer(-time, names_to = "geo", values_to = var_name)
-          res[[var_name]] <- cur_res
+          grp_res[[var_name]] <- cur_res
+        }
+
+        # Create wide table for this group only
+        grp_wide <- reduce(grp_res, ~ full_join(.x, .y, by = join_by(time, geo)))
+
+        # Apply PCA to this group's variables only
+        grp_data_for_pca <-
+          grp_wide |>
+          select(-c(geo, time)) |>
+          select(where(~ {
+            x <- .
+            # Keep column only if:
+            # - not all NA
+            # - more than one unique non-NA value
+            !all(is.na(x)) &&
+              n_distinct(x, na.rm = TRUE) > 1
+          }))
+
+        # Only perform PCA if there are variables to analyze
+        if (ncol(grp_data_for_pca) > 0) {
+          grp_pca <-
+            grp_data_for_pca |>
+            mutate(
+              across(
+                where(is.numeric),
+                ~ replace_na(.x, mean(.x, na.rm = TRUE))
+              )
+            ) |>
+            prcomp(center = TRUE, scale. = TRUE)
+
+          # Create result table with PC names prefixed by group name
+          grp_result <-
+            grp_wide |>
+            select(geo, time) |>
+            separate(time, into = c("year", "quarter")) |>
+            bind_cols(grp_pca$x) |>
+            rename_with(~ paste0(grp_name, "_", .x), starts_with("PC")) |>
+            pivot_longer(-c(geo, year, quarter), names_to = "var_id", values_to = "value")
+
+          eurostat_pca_results[[grp_name]] <- grp_result
         }
       }
 
-      eurostat_tbl <-
-        reduce(res, ~ full_join(.x, .y, by = join_by(time, geo))) |>
-        pivot_longer(-c(time, geo), names_to = "var_id", values_to = "value")
+      # Combine all PCA results
+      eurostat_tbl <- bind_rows(eurostat_pca_results)
 
       # bioatmo
       nc <- nc_open("data/level_3_quarter.nc")
@@ -235,32 +313,16 @@ list(
         features_csv |>
         filter(sphere != "socio") |>
         pull(var_id) |>
-        c("tp")
-
-      socio_cube <-
-        cube_tbl |>
-        filter(!var_id %in% other_features) |>
-        unite("space_time", geo, quarter, year) |>
-        pivot_wider(names_from = var_id, values_from = value) |>
-        column_to_rownames("space_time")
-
-      socio_cube[is.na(socio_cube)] <- 0
-      feature_cors <- cor(socio_cube, method = "pearson")
-      feature_clust <- hclust(as.dist(1 - feature_cors))
-      feature_clusters <- cutree(feature_clust, h = 0.5)
+        c("tp") |>
+        as.character() # no fatcor
 
       preselected_socio_features <-
-        features |>
-        filter(!var_id %in% other_features) |>
-        mutate(cluster = map_int(var_id, ~ feature_clusters[.x])) |>
-        group_by(cluster) |>
-        # random shuffling
-        sample_frac(1, replace = FALSE) |>
-        # prefer pooled features
-        arrange(-str_detect(label, "TOTAL"), -str_detect(label, "T")) |>
-        slice(1) |>
-        ungroup() |>
-        pull(var_id)
+        cube_tbl |>
+        filter(str_detect(var_id, "_PC1$")) |>
+        distinct(var_id) |>
+        arrange(var_id) |>
+        pull(var_id) |>
+        as.character() # no factor
 
       c(preselected_socio_features, other_features)
     }

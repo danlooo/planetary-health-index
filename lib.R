@@ -270,11 +270,11 @@ plot_loadings <- function(data, value_column, value_label) {
     arrange(-value) |>
     head(10) |>
     mutate(label = fct_reorder(label, value)) |>
-    ggplot(aes(label, value, fill=sign)) +
+    ggplot(aes(label, value, fill = sign)) +
     geom_bar(stat = "identity") +
     geom_hline(yintercept = 0) +
     coord_flip() +
-    scale_fill_manual(values = c("positive" = "black", "negative"= "darkgrey"))+
-    scale_y_continuous(expand = c(0,0)) +
+    scale_fill_manual(values = c("positive" = "black", "negative" = "darkgrey")) +
+    scale_y_continuous(expand = c(0, 0)) +
     labs(x = "Feature", y = value_label)
 }
