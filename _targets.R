@@ -207,7 +207,10 @@ list(
       }
 
       # Combine all PCA results
-      eurostat_tbl <- bind_rows(eurostat_pca_results)
+      eurostat_tbl <-
+        eurostat_pca_results |>
+        bind_rows() |>
+        unite(col = "time", year, quarter, sep = "-")
 
       # bioatmo
       nc <- nc_open("data/level_3_quarter.nc")
