@@ -15,7 +15,6 @@ ui <- function(request) {
         border: 2px solid darkgrey !important;
       }
       html {
-        max-width: 120rem;
         margin: 0 auto;
       }
       h3 {
@@ -92,13 +91,23 @@ ui <- function(request) {
                 value = ""
               )
             ),
-            withSpinner(plotOutput("scores_plt", height = "800px")),
-            h3("Loadings between spheres"),
             fluidRow(
-              withSpinner(plotOutput("loadings_cca1_fwd_plt")),
-              withSpinner(plotOutput("loadings_cca2_fwd_plt")),
-              withSpinner(plotOutput("loadings_cca1_rev_plt")),
-              withSpinner(plotOutput("loadings_cca2_rev_plt"))
+                column(
+                    8,
+                    withSpinner(plotOutput("scores_plt", height = "800px"))
+                ),
+                column(
+                    4,
+                    h4("FWD CCA1 loading"),
+                    withSpinner(plotOutput("loadings_cca1_fwd_plt")),
+                    h4("REV CCA1 loading"),
+                    withSpinner(plotOutput("loadings_cca1_rev_plt"))
+                )
+            ),
+            h3("Further loadings"),
+            fluidRow(
+                withSpinner(plotOutput("loadings_cca2_fwd_plt")),
+                withSpinner(plotOutput("loadings_cca2_rev_plt"))
             )
         ),
         nav_panel(
