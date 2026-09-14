@@ -85,12 +85,6 @@ ui <- function(request) {
         nav_panel(
             title = "Spheres",
             h3("Scores between spheres"),
-            fluidRow(
-                textInput(
-                    "highlight_str", "Highlight NUTS region or year",
-                    value = ""
-                )
-            ),
             h4("CCA1"),
             fluidRow(
                 column(
@@ -117,6 +111,12 @@ ui <- function(request) {
                     withSpinner(plotOutput("loadings_cca2_fwd_plt")),
                     h5("REV CCA2 loading"),
                     withSpinner(plotOutput("loadings_cca2_rev_plt"))
+                )
+            ),
+            fluidRow(
+                textInput(
+                    "highlight_str", "Highlight NUTS region or year",
+                    value = ""
                 )
             )
         ),
