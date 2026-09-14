@@ -21,8 +21,11 @@ ui <- function(request) {
         color: #006c66
       }
       .tab-content.html-fill-container, .navbar-header {
-        padding-left: 1.5em;
-        padding-right: 1.5em;
+        padding-left: 0.5em;
+        padding-right: 0.5em;
+      }
+      .shiny-plot-output {
+        margin-bottom: 2px !important;
       }
       .btn {
         max-width: 500px
