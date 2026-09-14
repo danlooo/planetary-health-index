@@ -91,23 +91,33 @@ ui <- function(request) {
                     value = ""
                 )
             ),
+            h4("CCA1"),
             fluidRow(
                 column(
                     8,
-                    withSpinner(plotOutput("scores_plt", height = "800px"))
+                    withSpinner(plotOutput("scores_plt", height = "400px"))
                 ),
                 column(
                     4,
-                    h4("FWD CCA1 loading"),
+                    h5("FWD CCA1 loading"),
                     withSpinner(plotOutput("loadings_cca1_fwd_plt")),
-                    h4("REV CCA1 loading"),
+                    h5("REV CCA1 loading"),
                     withSpinner(plotOutput("loadings_cca1_rev_plt"))
                 )
             ),
-            h3("Further loadings"),
+            h4("CCA2"),
             fluidRow(
-                withSpinner(plotOutput("loadings_cca2_fwd_plt")),
-                withSpinner(plotOutput("loadings_cca2_rev_plt"))
+                column(
+                    8,
+                    withSpinner(plotOutput("scores_cca2_plt", height = "400px"))
+                ),
+                column(
+                    4,
+                    h5("FWD CCA2 loading"),
+                    withSpinner(plotOutput("loadings_cca2_fwd_plt")),
+                    h5("REV CCA2 loading"),
+                    withSpinner(plotOutput("loadings_cca2_rev_plt"))
+                )
             )
         ),
         nav_panel(
