@@ -91,11 +91,11 @@ ui <- function(request) {
             h4("CCA1"),
             fluidRow(
                 column(
-                    4,
+                    6,
                     withSpinner(plotOutput("scores_plt"))
                 ),
                 column(
-                    8,
+                    6,
                     withSpinner(plotOutput("loadings_cca1_fwd_plt")),
                     withSpinner(plotOutput("loadings_cca1_rev_plt"))
                 )
@@ -103,11 +103,11 @@ ui <- function(request) {
             h4("CCA2"),
             fluidRow(
                 column(
-                    4,
+                    6,
                     withSpinner(plotOutput("scores_cca2_plt"))
                 ),
                 column(
-                    8,
+                    6,
                     withSpinner(plotOutput("loadings_cca2_fwd_plt")),
                     withSpinner(plotOutput("loadings_cca2_rev_plt"))
                 )

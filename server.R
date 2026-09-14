@@ -161,7 +161,6 @@ server <- function(input, output, session) {
             ) +
             stat_density_2d(contour = TRUE, mapping = aes(color = "all")) +
             scale_color_manual(values = c("all" = "darkgrey", "highlighted" = primary_color)) +
-            coord_fixed() +
             labs(
                 x = paste0(input$x_sphere, "-", input$y_sphere),
                 y = paste0(input$y_sphere, "-", input$x_sphere),
@@ -192,7 +191,7 @@ server <- function(input, output, session) {
         h1 <- sum(grid::convertHeight(fwd_grob$heights, "inches", valueOnly = TRUE), na.rm = TRUE)
         h2 <- sum(grid::convertHeight(rev_grob$heights, "inches", valueOnly = TRUE), na.rm = TRUE)
 
-        ceiling((h1 + h2) * 96 + 40)  # inches→pixels at 96 DPI + padding
+        ceiling((h1 + h2) * 96 + 40) # inches→pixels at 96 DPI + padding
     }
 
     scores_cca2_plt <- reactive({
@@ -220,7 +219,6 @@ server <- function(input, output, session) {
             ) +
             stat_density_2d(contour = TRUE, mapping = aes(color = "all")) +
             scale_color_manual(values = c("all" = "darkgrey", "highlighted" = primary_color)) +
-            coord_fixed() +
             labs(
                 x = paste0(input$x_sphere, "-", input$y_sphere),
                 y = paste0(input$y_sphere, "-", input$x_sphere),
