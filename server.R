@@ -172,8 +172,28 @@ server <- function(input, output, session) {
 
     output$scores_plt <- renderPlot(
         bg = "transparent",
-        scores_plt()
+        scores_plt(),
+        height = function() {
+            loading_pair_height(
+                cca_fwd()$loadings, cca_rev()$loadings,
+                "CCA1", "FWD CCA1 loading", "REV CCA1 loading"
+            )
+        }
     ) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str, input$detrend_methods, input$scaling_grouping)
+
+    # Measure combined natural height of two loading bar plots (pixels)
+    loading_pair_height <- function(fwd_loadings, rev_loadings, col, fwd_label, rev_label) {
+        fwd_grob <- plot_loadings(fwd_loadings, col, fwd_label) |> ggplotGrob()
+        rev_grob <- plot_loadings(rev_loadings, col, rev_label) |> ggplotGrob()
+
+        pdf(NULL)
+        on.exit(dev.off())
+
+        h1 <- sum(grid::convertHeight(fwd_grob$heights, "inches", valueOnly = TRUE), na.rm = TRUE)
+        h2 <- sum(grid::convertHeight(rev_grob$heights, "inches", valueOnly = TRUE), na.rm = TRUE)
+
+        ceiling((h1 + h2) * 96 + 40)  # inches→pixels at 96 DPI + padding
+    }
 
     scores_cca2_plt <- reactive({
         data <-
@@ -211,7 +231,13 @@ server <- function(input, output, session) {
 
     output$scores_cca2_plt <- renderPlot(
         bg = "transparent",
-        scores_cca2_plt()
+        scores_cca2_plt(),
+        height = function() {
+            loading_pair_height(
+                cca_fwd()$loadings, cca_rev()$loadings,
+                "CCA2", "FWD CCA2 loading", "REV CCA2 loading"
+            )
+        }
     ) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str, input$detrend_methods, input$scaling_grouping)
 
     loadings_cca1_fwd_plt <- reactive(plot_loadings(cca_fwd()$loadings, "CCA1", "FWD CCA1 loading"))
