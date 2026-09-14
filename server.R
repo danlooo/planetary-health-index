@@ -175,6 +175,45 @@ server <- function(input, output, session) {
         scores_plt()
     ) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str, input$detrend_methods, input$scaling_grouping)
 
+    scores_cca2_plt <- reactive({
+        data <-
+            inner_join(
+                cca_fwd()$scores |> select(fwd = CCA2, geo, time),
+                cca_rev()$scores |> select(rev = CCA2, geo, time)
+            ) |>
+            unite("name", geo, time)
+
+        r <- cor.test(data$fwd, data$rev, method = "pearson")$estimate
+
+        data |>
+            ggplot(aes(fwd, rev)) +
+            geom_abline(color = dark_gray_color) +
+            geom_point(
+                data = highlighted_data(),
+                color = primary_color,
+                alpha = 0.3,
+                size = 1
+            ) +
+            geom_density_2d(
+                data = highlighted_data(),
+                mapping = aes(color = "highlighted"),
+            ) +
+            stat_density_2d(contour = TRUE, mapping = aes(color = "all")) +
+            scale_color_manual(values = c("all" = "darkgrey", "highlighted" = primary_color)) +
+            coord_fixed() +
+            labs(
+                x = paste0(input$x_sphere, "-", input$y_sphere),
+                y = paste0(input$y_sphere, "-", input$x_sphere),
+                color = "Sample group",
+                subtitle = paste0("Pearson r=", round(r, 2) |> abs())
+            )
+    })
+
+    output$scores_cca2_plt <- renderPlot(
+        bg = "transparent",
+        scores_cca2_plt()
+    ) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str, input$detrend_methods, input$scaling_grouping)
+
     loadings_cca1_fwd_plt <- reactive(plot_loadings(cca_fwd()$loadings, "CCA1", "FWD CCA1 loading"))
     output$loadings_cca1_fwd_plt <- renderPlot(loadings_cca1_fwd_plt())
 
@@ -346,6 +385,9 @@ server <- function(input, output, session) {
             scores_file <- file.path(tmp_dir, "scores.png")
             ggsave(scores_file, plot = scores_plt())
 
+            scores_cca2_file <- file.path(tmp_dir, "scores_cca2.png")
+            ggsave(scores_cca2_file, plot = scores_cca2_plt())
+
 
             loadings_cca1_fwd_file <- file.path(tmp_dir, "loadings_cca1_fwd.png")
             ggsave(loadings_cca1_fwd_file, plot = loadings_cca1_fwd_plt(), width = 18)
@@ -370,7 +412,7 @@ server <- function(input, output, session) {
                 zipfile = zip_path,
                 files = c(
                     loadings_cca1_fwd_file, loadings_cca2_fwd_file, loadings_cca1_rev_file, loadings_cca2_rev_file,
-                    inputs_file, trajectories_fwd_file, trajectories_rev_file, scores_file
+                    inputs_file, trajectories_fwd_file, trajectories_rev_file, scores_file, scores_cca2_file
                 ),
                 flags = "-j" # removes directory paths inside the zip
             )
