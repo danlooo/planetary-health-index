@@ -34,7 +34,8 @@ all_preselected_features <- tar_read(preselected_features)
 
 theme_set(
     theme_classic(base_size = 18) + theme(
-        legend.position = "bottom"
+        legend.position = "bottom",
+        plot.margin = margin(t = 0, r = 0, b = 0, l = 0)
     )
 )
 quarters <- seq(
