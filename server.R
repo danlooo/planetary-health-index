@@ -161,6 +161,7 @@ server <- function(input, output, session) {
             ) +
             stat_density_2d(contour = TRUE, mapping = aes(color = "all")) +
             scale_color_manual(values = c("all" = "darkgrey", "highlighted" = primary_color)) +
+            coord_fixed() + 
             labs(
                 x = paste0(input$x_sphere, "-", input$y_sphere),
                 y = paste0(input$y_sphere, "-", input$x_sphere),
@@ -225,6 +226,7 @@ server <- function(input, output, session) {
             ) +
             stat_density_2d(contour = TRUE, mapping = aes(color = "all")) +
             scale_color_manual(values = c("all" = "darkgrey", "highlighted" = primary_color)) +
+            coord_fixed() + 
             labs(
                 x = paste0(input$x_sphere, "-", input$y_sphere),
                 y = paste0(input$y_sphere, "-", input$x_sphere),
