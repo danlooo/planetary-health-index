@@ -146,7 +146,7 @@ server <- function(input, output, session) {
 
         r <- cor.test(data$fwd, data$rev, method = "pearson")$estimate
 
-        data |>
+        p <- data |>
             ggplot(aes(fwd, rev)) +
             geom_abline(color = dark_gray_color) +
             geom_point(
@@ -167,6 +167,12 @@ server <- function(input, output, session) {
                 color = "Sample group",
                 subtitle = paste0("Pearson r=", round(r, 2) |> abs())
             )
+
+        if (r < 0) {
+            p <- p + scale_y_reverse()
+        }
+
+        p
     })
 
     output$scores_plt <- renderPlot(
@@ -204,7 +210,7 @@ server <- function(input, output, session) {
 
         r <- cor.test(data$fwd, data$rev, method = "pearson")$estimate
 
-        data |>
+        p <- data |>
             ggplot(aes(fwd, rev)) +
             geom_abline(color = dark_gray_color) +
             geom_point(
@@ -225,6 +231,12 @@ server <- function(input, output, session) {
                 color = "Sample group",
                 subtitle = paste0("Pearson r=", round(r, 2) |> abs())
             )
+
+        if (r < 0) {
+            p <- p + scale_y_reverse()
+        }
+
+        p
     })
 
     output$scores_cca2_plt <- renderPlot(
