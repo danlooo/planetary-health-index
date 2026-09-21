@@ -18,11 +18,11 @@ bio,GPP,GPP,Gross Primary Productivity,FLUXCOM-XBASE
 bio,skt,ST,Surface temperature,ERA5
 bio, EVIgapfilled_061_QCdyn,EVI,Enhanced Vegetation Index,MODIS
 bio, q,Q,Sensible heat flux,ERA5
-socio,nama_10r_3gva_PC1,GVA,Gross value added, Eurostat
-socio,nama_10_nfa_bs_PC1,CapStocks, Capital Stocks, Eurostat
-socio, nama_10r_2gfcf_PC1,GFCF, Gross fixed capital formation, Eurostat
-socio,demo_r_d3dens_PC1,PopD,Population density, Eurostat
-socio,nama_10r_3gdp_PC1,GDP,Gross Domestic Product, Eurostat
-socio,edat_lfse_04_PC1,PopPH,Population in private households, Eurostat
-socio,lfst_r_lfu3pers_PC1,UnempP,Unemployed persons, Eurostat
-socio,nama_10r_2emhrw_PC1,Empl,Employment, Eurostat
+socio,nama_10r_3gva_PC1,GVA,Gross value added (PC1 of dataset nama_10r_3gva), Eurostat
+socio,nama_10_nfa_bs_PC1,CapStocks, Capital Stocks (PC1 of dataset nama_10_nfa_bs), Eurostat
+socio, nama_10r_2gfcf_PC1,GFCF, Gross fixed capital formation (PC1 of dataset nama_10r_2gfcf), Eurostat
+socio,demo_r_d3dens_PC1,PopD,Population density (PC1 of dataset demo_r_d3dens), Eurostat
+socio,nama_10r_3gdp_PC1,GDP,Gross Domestic Product (PC1 of dataset nama_10r_3gdp), Eurostat
+socio,edat_lfse_04_PC1,PopPH,Population in private households (PC1 of dataset edat_lfse_04), Eurostat
+socio,lfst_r_lfu3pers_PC1,UnempP,Unemployed persons (PC1 of dataset lfst_r_lfu3pers), Eurostat
+socio,nama_10r_2emhrw_PC1,Empl,Employment (PC1 of dataset nama_10r_2emhrw), Eurostat
