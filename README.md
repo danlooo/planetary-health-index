@@ -11,6 +11,7 @@ To run it locally, clone this repository and run:
 ```bash
 git clone https://github.com/danlooo/planetary-health-index.git
 cd planetary-health-index
+git lfs pull
 docker compose up --build
 ```
 

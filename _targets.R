@@ -79,6 +79,14 @@ list(
           spatial_resolution = replace_na(spatial_resolution, "sub NUTS 3"),
         ) |>
         filter(var_id %in% cube_tbl$var_id) |>
+        filter(case_when(
+          sphere %in% c("atmo", "bio") ~ TRUE,
+          sphere == "socio" ~ {
+            str_ends(var_id, "_PC1") &
+              var_id %in% features_csv$var_id &
+              !str_starts(label, "PC1 from") # remove duplicates
+          }
+        )) |>
         arrange(sphere, var_id)
     }
   ),
