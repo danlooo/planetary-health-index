@@ -54,39 +54,23 @@ list(
           eurostat_metadata |> select(code, unit) |> distinct(),
           by = c("dataset_code" = "code")
         ) |>
-        mutate(
-          source = "Eurostat",
-          label = paste0(
-            pc_number, " from ", dataset_code,
-            ifelse(is.na(unit), "", paste0(" (", unit, ")"))
-          ),
-          description = str_glue("Principal component from Eurostat dataset {dataset_code}"),
-          temporal_resolution = "sub monthly",
-          spatial_resolution = "sub NUTS 3"
+        mutate(source = "Eurostat") |>
+        left_join(
+          features_csv |> filter(sphere == "socio") |> select(var_id, label, description),
         ) |>
-        select(-dataset_code, -pc_number, -unit)
+        left_join(eurostat_resolutions, by = c("dataset_code" = "code")) |>
+        select(-pc_number, -unit)
 
-      # Combine with non-socio features and arrange
       pca_features |>
-        full_join(features_csv) |>
-        left_join(eurostat_resolutions) |>
-        mutate(
-          sphere = replace_na(sphere, "socio"),
-          source = replace_na(source, "Eurostat"),
-          label = ifelse(is.na(label), var_id, label),
-          description = ifelse(is.na(description), str_glue("from Eurostat dataset {code}"), description),
-          temporal_resolution = replace_na(temporal_resolution, "sub monthly"),
-          spatial_resolution = replace_na(spatial_resolution, "sub NUTS 3"),
+        filter(var_id |> str_ends("_PC1")) |>
+        distinct(var_id, .keep_all = TRUE) |>
+        bind_rows(
+          features_csv |>
+            filter(sphere != "socio") |>
+            mutate(temporal_resolution = "sub monthly", spatial_resolution = "sub NUTS3")
         ) |>
         filter(var_id %in% cube_tbl$var_id) |>
-        filter(case_when(
-          sphere %in% c("atmo", "bio") ~ TRUE,
-          sphere == "socio" ~ {
-            str_ends(var_id, "_PC1") &
-              var_id %in% features_csv$var_id &
-              !str_starts(label, "PC1 from") # remove duplicates
-          }
-        )) |>
+        filter(!is.na(label)) |>
         arrange(sphere, var_id)
     }
   ),

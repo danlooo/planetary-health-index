@@ -173,13 +173,17 @@ n_expected_rows|stem|9d878d526cf6f211|20486c49d293d4df|95d932a5b5794bbd|43498857
 space_times|stem|0f21abc051e726dc|1a918fd0b3d4a62b|95d932a5b5794bbd|525720312||t20528.5740277778s|s256211b|256211|rds|local|vector|||0.036||
 eurostat_metadata|stem|d12c8feee0987773|14d53ac4f6e8f12e|72a5fe1841831109|-1782525778||t20528.5742476852s|s2023b|2023|rds|local|vector|||0.317||
 eurostat_resolutions_file|stem|c244e3d80bdf84cd|ac875c717f8fd8f7|2c530c1562a7fbd1|474938627|data/eurostat-resolutions.csv|t20566.5849824822s|s397b|397|file|local|vector|||0.001||
-eurostat_file|stem|1370f06f92f0aebc|6a894374eb5950a6|2472ec2cc9ef7fd0|-263900638|data/eurostat-datacube.nc|t20615.4836901625s|s110237183b|110237183|file|local|vector|||15.861||
 eurostat_resolutions|stem|c0af573e0b578bf5|54293d070bf1c756|10108c127db8ccd0|-2126261483||t20717.3700829486s|s433b|433|rds|local|vector|||0.023||
 cube_tbl|stem|7ee1f560e9114bbe|ee82e532d7be073b|efba5c72a0e1b6ef|-1536911574||t20717.3703950616s|s25916302b|25916302|rds|local|vector|||24.579||
 global_stats|stem|7002fb4f5f62989f|c36c8aef0859e55f|9ba0664ae2b6b195|-647585404||t20717.3704088169s|s2434b|2434|rds|local|vector|||0.481||
 quarterly_stats|stem|ba6067c79e4ca7c0|d569d1238c118b89|808a372af8cb6c4c|721029889||t20717.3705100909s|s3101b|3101|rds|local|vector|||0.475||
 annual_stats|stem|897a13027e2bd17e|2efa5cba3dff9f5f|808a372af8cb6c4c|1900002718||t20717.3705250532s|s51962b|51962|rds|local|vector|||0.613||
 geo_stats|stem|ba3bfff2558593a9|41b1631bad05b7e6|808a372af8cb6c4c|1737247516||t20717.370550761s|s619535b|619535|rds|local|vector|||1.493||
+features_csv_file|stem|38e5b476ed7d35bb|e5bafb09a7d0946e|2c530c1562a7fbd1|995110937|data/features.csv|t20717.4772388624s|s1895b|1895|file|local|vector|||0||
+eurostat_file|stem|1370f06f92f0aebc|6a894374eb5950a6|2472ec2cc9ef7fd0|-263900638|data/eurostat-datacube.nc|t20717.4669675343s|s110237183b|110237183|file|local|vector|||15.861||
+features_csv|stem|4583ab536bf4bf82|0383e023ea641077|5db6a721238a108b|-2077478744||t20717.6033241447s|s1144b|1144|rds|local|vector|||0.093||
+preselected_features|stem|8440b6e6c1bf7817|812d7bbfdff3cd7e|952cd8e03365562d|2113610651||t20717.6033688966s|s293b|293|rds|local|vector|||2.775||
+features|stem|c29c53b67c9545c6|473b6c12e0b3262d|03e9b1c672fbc0ce|-477244766||t20717.6050166835s|s1070b|1070|rds|local|vector|||3.332|Detected an unexpected many-to-many relationship between `x` and `y`. ℹ Row 43 of `x` matches multiple rows in `y`. ℹ Row 12 of `y` matches multiple rows in `x`. ℹ If a many-to-many relationship is expected, set `relationship =   'many-to-many'` to silence this warning.|
 calculate_cca|function|3a62dad968a52e61
 primary_color|object|092a5f65d4b3906d
 resample_space_to_nuts3|function|dca19a4479ae4a50
@@ -195,7 +199,3 @@ resample_time_to_quarter|function|88c41afa09c0b828
 light_gray_color|object|85009bc8ac4df8e9
 write_nc_tibble|function|8e3cf56968bf7460
 sphere_colors|object|1b3c78ef062c343b
-features_csv_file|stem|8b6755fc423905fd|e5bafb09a7d0946e|2c530c1562a7fbd1|995110937|data/features.csv|t20717.4108084701s|s1517b|1517|file|local|vector|||0||
-features_csv|stem|62054f31e833ec92|0383e023ea641077|f38552081069c0bf|-2077478744||t20717.4111574239s|s1036b|1036|rds|local|vector|||0.08||
-preselected_features|stem|8440b6e6c1bf7817|812d7bbfdff3cd7e|45c92b86b1843078|2113610651||t20717.4111999584s|s293b|293|rds|local|vector|||2.59||
-features|stem|350cba879aadc4cb|aa0c55e31c3f7b70|d490a902ba826a33|-477244766||t20717.4112443102s|s2861b|2861|rds|local|vector|||3.122|Detected an unexpected many-to-many relationship between `x` and `y`. ℹ Row 43 of `x` matches multiple rows in `y`. ℹ Row 12 of `y` matches multiple rows in `x`. ℹ If a many-to-many relationship is expected, set `relationship =   'many-to-many'` to silence this warning.|
