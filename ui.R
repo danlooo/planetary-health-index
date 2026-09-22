@@ -64,7 +64,8 @@ ui <- function(request) {
                 "e.g., to model socioeconomic features using biological measurements. Hereby, Canonical Correlation Analysis is used ",
                 "to model a set of related features holistically, whereas traditional Pearson Correlation focuses on the relationship ",
                 "between two individual features. Data was collected from Eurostat, ERA5, and FluxCom."
-            ))
+            )),
+            a("This project is available on GitHub.", href = "https://github.com/danlooo/planetary-health-index")
         ),
         nav_panel(
             title = "Features",
