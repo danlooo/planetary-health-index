@@ -65,7 +65,8 @@ ui <- function(request) {
                 "to model a set of related features holistically, whereas traditional Pearson Correlation focuses on the relationship ",
                 "between two individual features. Data was collected from Eurostat, ERA5, and FluxCom."
             )),
-            a("This project is available on GitHub.", href = "https://github.com/danlooo/planetary-health-index")
+            a("This project is available on GitHub.", href = "https://github.com/danlooo/planetary-health-index"),
+            div("This project has received funding from the Open-Earth-Monitor Cyberinfrastructure project that is part of the European Union's Horizon Europe research and innovation program under grant 101059548. This project is also a collaboration with the European Central Bank.")
         ),
         nav_panel(
             title = "Features",
