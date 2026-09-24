@@ -135,8 +135,35 @@ ui <- function(request) {
             title = "Temporal",
             h3("Temporal distribution"),
             fluidRow(
-                selectInput("selected_geo", "Regions:", choices = nuts3_regions$label, selected = c("Berlin", "Paris"), multiple = TRUE),
-                selectInput("selected_feature_for_timeseries", "Features:", choices = features$label, multiple = TRUE)
+                column(
+                    3,
+                    selectInput("selected_geo", "Regions:", choices = nuts3_regions$label, selected = c("Berlin", "Paris"), multiple = TRUE)
+                ),
+                column(
+                    3,
+                    selectInput("selected_feature_for_timeseries", "Features:", choices = features$label, multiple = TRUE)
+                ),
+                column(
+                    3,
+                    sliderInput(
+                        "highlight_year_range", "Highlight year range:",
+                        min = 2001, max = 2021, value = c(2001, 2021), sep = ""
+                    )
+                ),
+                column(
+                    1,
+                    selectInput(
+                        "highlight_start_quarter", "Start Q",
+                        choices = c("Q1", "Q2", "Q3", "Q4"), selected = "Q1"
+                    )
+                ),
+                column(
+                    1,
+                    selectInput(
+                        "highlight_end_quarter", "End Q",
+                        choices = c("Q1", "Q2", "Q3", "Q4"), selected = "Q4"
+                    )
+                )
             ),
             withSpinner(plotOutput("timeseries_plt")),
             fluidRow(

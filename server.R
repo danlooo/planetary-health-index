@@ -161,7 +161,7 @@ server <- function(input, output, session) {
             ) +
             stat_density_2d(contour = TRUE, mapping = aes(color = "all")) +
             scale_color_manual(values = c("all" = "darkgrey", "highlighted" = primary_color)) +
-            coord_fixed() + 
+            coord_fixed() +
             labs(
                 x = paste0(input$x_sphere, "-", input$y_sphere),
                 y = paste0(input$y_sphere, "-", input$x_sphere),
@@ -226,7 +226,7 @@ server <- function(input, output, session) {
             ) +
             stat_density_2d(contour = TRUE, mapping = aes(color = "all")) +
             scale_color_manual(values = c("all" = "darkgrey", "highlighted" = primary_color)) +
-            coord_fixed() + 
+            coord_fixed() +
             labs(
                 x = paste0(input$x_sphere, "-", input$y_sphere),
                 y = paste0(input$y_sphere, "-", input$x_sphere),
@@ -264,8 +264,38 @@ server <- function(input, output, session) {
     loadings_cca2_rev_plt <- reactive(plot_loadings(cca_rev()$loadings, "CCA2", "REV CCA2 loading"))
     output$loadings_cca2_rev_plt <- renderPlot(loadings_cca2_rev_plt())
 
+    highlighted_time_data <- reactive({
+        function(data) {
+            data |>
+                mutate(
+                    .year = as.numeric(str_extract(time, "^[0-9]{4}")),
+                    .quarter = str_extract(time, "Q[1-4]$")
+                ) |>
+                filter(
+                    (.year > input$highlight_year_range[1] |
+                        (.year == input$highlight_year_range[1] & .quarter >= input$highlight_start_quarter)),
+                    (.year < input$highlight_year_range[2] |
+                        (.year == input$highlight_year_range[2] & .quarter <= input$highlight_end_quarter))
+                ) |>
+                select(-.year, -.quarter)
+        }
+    })
+
+    is_single_quarter <- reactive({
+        q_num <- c("Q1" = 1, "Q2" = 2, "Q3" = 3, "Q4" = 4)
+        start_idx <- input$highlight_year_range[1] * 4 + q_num[input$highlight_start_quarter]
+        end_idx <- input$highlight_year_range[2] * 4 + q_num[input$highlight_end_quarter]
+        start_idx == end_idx
+    })
+is_full_timespan <- reactive({
+        input$highlight_year_range[1] == 2001 &&
+            input$highlight_year_range[2] == 2021 &&
+            input$highlight_start_quarter == "Q1" &&
+            input$highlight_end_quarter == "Q4"
+    })
+
     trajectories_fwd_plt <- reactive({
-        cca_fwd()$scores |>
+        p <- cca_fwd()$scores |>
             left_join(nuts3_regions |> rename(geo_label = label)) |>
             arrange(geo, time) |>
             distinct(geo, CCA1, CCA2, .keep_all = TRUE) |>
@@ -274,19 +304,49 @@ server <- function(input, output, session) {
                 data = ~ filter(.x, geo_label %in% input$selected_geo),
                 mapping = aes(group = geo, color = geo_label),
                 arrow = arrow(ends = "last")
-            ) +
+            )
+
+        if (!is_full_timespan()) {
+            p <- p +
+                geom_path(
+                    data = ~ highlighted_time_data()(filter(.x, geo_label %in% input$selected_geo)),
+                    mapping = aes(group = geo, color = geo_label),
+                    arrow = arrow(ends = "last"),
+                    linewidth = 1.75
+                ) +
+                geom_point(
+                    data = ~ {
+                        d <- highlighted_time_data()(filter(.x, geo_label %in% input$selected_geo))
+                        if (is_single_quarter()) {
+                            d
+                        } else {
+                            d |>
+                                group_by(geo) |>
+                                arrange(time) |>
+                                filter(lag(CCA1) == lead(CCA1) & lag(CCA2) == lead(CCA2))
+                        }
+                    },
+                    mapping = aes(color = geo_label),
+                    size = 4
+                )
+        }
+
+        p <- p +
             coord_fixed() +
             guides(fill = "none") +
             labs(title = paste0(input$x_sphere, "-", input$y_sphere), color = "Region")
+
+        p
     })
 
     output$trajectories_fwd_plt <- renderPlot(trajectories_fwd_plt()) |> bindCache(
         input$x_sphere, input$y_sphere, input$used_features, input$detrended_features,
-        input$selected_geo, input$detrend_methods, input$scaling_grouping
+        input$selected_geo, input$detrend_methods, input$scaling_grouping,
+        input$highlight_year_range, input$highlight_start_quarter, input$highlight_end_quarter
     )
 
     trajectories_rev_plt <- reactive({
-        cca_rev()$scores |>
+        p <- cca_rev()$scores |>
             left_join(nuts3_regions |> rename(geo_label = label), by = join_by(geo)) |>
             arrange(geo, time) |>
             distinct(geo, CCA1, CCA2, .keep_all = TRUE) |>
@@ -295,17 +355,46 @@ server <- function(input, output, session) {
                 data = ~ filter(.x, geo_label %in% input$selected_geo),
                 mapping = aes(group = geo, color = geo_label),
                 arrow = arrow(ends = "last")
-            ) +
+            )
+
+        if (!is_full_timespan()) {
+            p <- p +
+                geom_path(
+                    data = ~ highlighted_time_data()(filter(.x, geo_label %in% input$selected_geo)),
+                    mapping = aes(group = geo, color = geo_label),
+                    arrow = arrow(ends = "last"),
+                    linewidth = 1.75
+                ) +
+                geom_point(
+                    data = ~ {
+                        d <- highlighted_time_data()(filter(.x, geo_label %in% input$selected_geo))
+                        if (is_single_quarter()) {
+                            d
+                        } else {
+                            d |>
+                                group_by(geo) |>
+                                arrange(time) |>
+                                filter(lag(CCA1) == lead(CCA1) & lag(CCA2) == lead(CCA2))
+                        }
+                    },
+                    mapping = aes(color = geo_label),
+                    size = 4
+                )
+        }
+
+        p <- p +
             coord_fixed() +
             guides(fill = "none") +
             labs(title = paste0(input$y_sphere, "-", input$x_sphere), color = "Region")
+
+        p
     })
 
     output$trajectories_rev_plt <- renderPlot(trajectories_rev_plt()) |> bindCache(
         input$x_sphere, input$y_sphere, input$used_features, input$detrended_features,
-        input$selected_geo, input$detrend_methods, input$scaling_grouping
+        input$selected_geo, input$detrend_methods, input$scaling_grouping,
+        input$highlight_year_range, input$highlight_start_quarter, input$highlight_end_quarter
     )
-
 
     output$map_plt <- renderPlot({
         cur_time <- paste0(input$selected_year, "-", input$selected_quarter)
@@ -399,9 +488,36 @@ server <- function(input, output, session) {
             filter(label %in% input$selected_feature_for_timeseries) |>
             mutate(time = yq(time))
 
-        cur_data |>
+        highlight_start <- yq(paste0(input$highlight_year_range[1], "-", input$highlight_start_quarter))
+        highlight_end <- yq(paste0(input$highlight_year_range[2], "-", input$highlight_end_quarter))
+
+        p <- cur_data |>
             ggplot(aes(time, value, color = geo_label, linetype = label)) +
-            geom_line() +
+            geom_line()
+
+        if (!is_full_timespan()) {
+            p <- p +
+                geom_line(
+                    data = ~ filter(.x, time >= highlight_start & time <= highlight_end),
+                    linewidth = 1.75
+                ) +
+                geom_point(
+                    data = ~ {
+                        d <- filter(.x, time >= highlight_start & time <= highlight_end)
+                        if (is_single_quarter()) {
+                            d
+                        } else {
+                            d |>
+                                group_by(geo_label, label) |>
+                                arrange(time) |>
+                                filter(lag(value) == lead(value))
+                        }
+                    },
+                    size = 2
+                )
+        }
+
+        p +
             theme(legend.position = "bottom", legend.direction = "vertical") +
             labs(y = "z-score", linetype = "Feature", color = "Region")
     })
