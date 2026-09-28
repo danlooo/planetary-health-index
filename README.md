@@ -1,6 +1,6 @@
-# Planetary Health Index
+# Planet Health Index
 
-Planetary Health Index (PHI) describes the state of a region at a given time using three sets of features: biosphere, atmosphere, and sociosphere.
+Planet Health Index (PHI) describes the state of a region at a given time using three sets of features: biosphere, atmosphere, and sociosphere.
 Canonical Correlation Analysis (CCA) is used to describe the relationship between a given pair of those feature sets.
 
 ## Get Started

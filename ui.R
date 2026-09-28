@@ -1,6 +1,6 @@
 ui <- function(request) {
     page_navbar(
-        title = "Planetary Health Index φ",
+        title = "Planet Health Index φ",
         theme = bs_theme(
             bootswatch = "minty",
             navbar_bg = primary_color,
@@ -60,7 +60,7 @@ ui <- function(request) {
         nav_panel(
             title = "Home",
             div(paste0(
-                "The Planetary Health Index φ is a concept to explain linear relationships of a set of features or spheres using another one, ",
+                "The Planet Health Index φ is a concept to explain linear relationships of a set of features or spheres using another one, ",
                 "e.g., to model socioeconomic features using biological measurements. Hereby, Canonical Correlation Analysis is used ",
                 "to model a set of related features holistically, whereas traditional Pearson Correlation focuses on the relationship ",
                 "between two individual features. Data was collected from Eurostat, ERA5, and FluxCom."
