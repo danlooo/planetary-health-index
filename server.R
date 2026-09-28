@@ -1,10 +1,4 @@
 server <- function(input, output, session) {
-    paste0(
-        "This app shows preliminary results ",
-        "for demonstration purposes only."
-    ) |>
-        showNotification(duration = Inf, type = "warning")
-
     observeEvent(
         list(input$x_sphere, input$y_sphere),
         {
@@ -287,7 +281,7 @@ server <- function(input, output, session) {
         end_idx <- input$highlight_year_range[2] * 4 + q_num[input$highlight_end_quarter]
         start_idx == end_idx
     })
-is_full_timespan <- reactive({
+    is_full_timespan <- reactive({
         input$highlight_year_range[1] == 2001 &&
             input$highlight_year_range[2] == 2021 &&
             input$highlight_start_quarter == "Q1" &&
