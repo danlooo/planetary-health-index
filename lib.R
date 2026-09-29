@@ -262,17 +262,19 @@ calculate_cca <- function(cube, x_features, y_features) {
 plot_loadings <- function(data, value_column, value_label) {
   data |>
     left_join(features) |>
-    select(value = all_of(value_column), label) |>
+    select(value = all_of(value_column), label, direction) |>
     mutate(
       sign = map_chr(value, ~ ifelse(sign(.x) == 1, "positive", "negative")),
       value = abs(value)
     ) |>
+    group_by(direction) |>
     arrange(-value) |>
-    head(10) |>
+    slice(1:10) |>
     mutate(label = fct_reorder(label, value)) |>
     ggplot(aes(label, value, fill = sign)) +
     geom_bar(stat = "identity") +
     geom_hline(yintercept = 0) +
+    facet_grid(direction ~ ., scales = "free_y", space = "free_y") +
     coord_flip() +
     scale_fill_manual(values = c("positive" = "black", "negative" = "darkgrey")) +
     scale_y_continuous(expand = c(0, 0)) +

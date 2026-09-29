@@ -246,17 +246,18 @@ server <- function(input, output, session) {
         }
     ) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str, input$detrend_methods, input$scaling_grouping)
 
-    loadings_cca1_plt <- reactive(plot_loadings(cca_fwd()$loadings, "CCA1", "CCA1 loading"))
+    loadings <- reactive(
+        bind_rows(
+            cca_fwd()$loadings |> mutate(direction = paste(input$x_sphere, "-", input$y_sphere)),
+            cca_rev()$loadings |> mutate(direction = paste(input$y_sphere, "-", input$x_sphere))
+        )
+    )
+
+    loadings_cca1_plt <- reactive(plot_loadings(loadings(), "CCA1", "CCA1 loading"))
     output$loadings_cca1_plt <- renderPlot(loadings_cca1_plt())
 
-    loadings_cca2_plt <- reactive(plot_loadings(cca_fwd()$loadings, "CCA2", "CCA2 loading"))
+    loadings_cca2_plt <- reactive(plot_loadings(loadings(), "CCA2", "CCA2 loading"))
     output$loadings_cca2_plt <- renderPlot(loadings_cca2_plt())
-
-    loadings_cca1_rev_plt <- reactive(plot_loadings(cca_rev()$loadings, "CCA1", "REV CCA1 loading"))
-    output$loadings_cca1_rev_plt <- renderPlot(loadings_cca1_rev_plt())
-
-    loadings_cca2_rev_plt <- reactive(plot_loadings(cca_rev()$loadings, "CCA2", "REV CCA2 loading"))
-    output$loadings_cca2_rev_plt <- renderPlot(loadings_cca2_rev_plt())
 
     highlighted_time_data <- reactive({
         function(data) {
@@ -537,18 +538,11 @@ server <- function(input, output, session) {
             ggsave(scores_cca2_file, plot = scores_cca2_plt())
 
 
-            loadings_cca1_fwd_file <- file.path(tmp_dir, "loadings_cca1_fwd.png")
-            ggsave(loadings_cca1_fwd_file, plot = loadings_cca1_plt(), width = 18)
+            loadings_cca1_file <- file.path(tmp_dir, "loadings_cca1.png")
+            ggsave(loadings_cca1_file, plot = loadings_cca1_plt(), width = 18)
 
-            loadings_cca2_fwd_file <- file.path(tmp_dir, "loadings_cca2_fwd.png")
-            ggsave(loadings_cca2_fwd_file, plot = loadings_cca2_plt(), width = 18)
-
-            loadings_cca1_rev_file <- file.path(tmp_dir, "loadings_cca1_rev.png")
-            ggsave(loadings_cca1_rev_file, plot = loadings_cca1_rev_plt(), width = 18)
-
-            loadings_cca2_rev_file <- file.path(tmp_dir, "loadings_cca2_rev.png")
-            ggsave(loadings_cca2_rev_file, plot = loadings_cca2_rev_plt(), width = 18)
-
+            loadings_cca2_file <- file.path(tmp_dir, "loadings_cca2.png")
+            ggsave(loadings_cca2_file, plot = loadings_cca2_plt(), width = 18)
 
             trajectories_fwd_file <- file.path(tmp_dir, "trajectories_fwd.png")
             ggsave(trajectories_fwd_file, plot = trajectories_fwd_plt())
@@ -559,8 +553,8 @@ server <- function(input, output, session) {
             utils::zip(
                 zipfile = zip_path,
                 files = c(
-                    loadings_cca1_fwd_file, loadings_cca2_fwd_file, loadings_cca1_rev_file, loadings_cca2_rev_file,
-                    inputs_file, trajectories_fwd_file, trajectories_rev_file, scores_file, scores_cca2_file
+                    inputs_file, loadings_cca1_file, loadings_cca2_file,
+                    trajectories_fwd_file, trajectories_rev_file, scores_file, scores_cca2_file
                 ),
                 flags = "-j" # removes directory paths inside the zip
             )
