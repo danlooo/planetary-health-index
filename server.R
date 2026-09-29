@@ -246,11 +246,11 @@ server <- function(input, output, session) {
         }
     ) |> bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$highlight_str, input$detrend_methods, input$scaling_grouping)
 
-    loadings_cca1_fwd_plt <- reactive(plot_loadings(cca_fwd()$loadings, "CCA1", "FWD CCA1 loading"))
-    output$loadings_cca1_fwd_plt <- renderPlot(loadings_cca1_fwd_plt())
+    loadings_cca1_plt <- reactive(plot_loadings(cca_fwd()$loadings, "CCA1", "CCA1 loading"))
+    output$loadings_cca1_plt <- renderPlot(loadings_cca1_plt())
 
-    loadings_cca2_fwd_plt <- reactive(plot_loadings(cca_fwd()$loadings, "CCA2", "FWD CCA2 loading"))
-    output$loadings_cca2_fwd_plt <- renderPlot(loadings_cca2_fwd_plt())
+    loadings_cca2_plt <- reactive(plot_loadings(cca_fwd()$loadings, "CCA2", "CCA2 loading"))
+    output$loadings_cca2_plt <- renderPlot(loadings_cca2_plt())
 
     loadings_cca1_rev_plt <- reactive(plot_loadings(cca_rev()$loadings, "CCA1", "REV CCA1 loading"))
     output$loadings_cca1_rev_plt <- renderPlot(loadings_cca1_rev_plt())
@@ -538,10 +538,10 @@ server <- function(input, output, session) {
 
 
             loadings_cca1_fwd_file <- file.path(tmp_dir, "loadings_cca1_fwd.png")
-            ggsave(loadings_cca1_fwd_file, plot = loadings_cca1_fwd_plt(), width = 18)
+            ggsave(loadings_cca1_fwd_file, plot = loadings_cca1_plt(), width = 18)
 
             loadings_cca2_fwd_file <- file.path(tmp_dir, "loadings_cca2_fwd.png")
-            ggsave(loadings_cca2_fwd_file, plot = loadings_cca2_fwd_plt(), width = 18)
+            ggsave(loadings_cca2_fwd_file, plot = loadings_cca2_plt(), width = 18)
 
             loadings_cca1_rev_file <- file.path(tmp_dir, "loadings_cca1_rev.png")
             ggsave(loadings_cca1_rev_file, plot = loadings_cca1_rev_plt(), width = 18)
