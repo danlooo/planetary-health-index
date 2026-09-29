@@ -94,22 +94,22 @@ ui <- function(request) {
             fluidRow(
                 column(
                     6,
-                    withSpinner(plotOutput("scores_plt"))
+                    withSpinner(plotOutput("scores_plt", height = "500px"))
                 ),
                 column(
                     6,
-                    withSpinner(plotOutput("loadings_cca1_plt"))
+                    withSpinner(plotOutput("loadings_cca1_plt", height = "500px"))
                 )
             ),
             h4("CCA2"),
             fluidRow(
                 column(
                     6,
-                    withSpinner(plotOutput("scores_cca2_plt"))
+                    withSpinner(plotOutput("scores_cca2_plt", height = "500px"))
                 ),
                 column(
                     6,
-                    withSpinner(plotOutput("loadings_cca2_plt"))
+                    withSpinner(plotOutput("loadings_cca2_plt", height = "500px"))
                 )
             ),
             fluidRow(
