@@ -55,7 +55,7 @@ ui <- function(request) {
                 choices = c("feature", "feature and region"),
                 selected = "feature"
             ),
-            p("Two CCAs will be performed: forward (fwd) from source to target sphere and reverse (rev) from target to the source sphere.")
+            p("Two CCAs will be performed: from the source sphere to the target sphere and from the target sphere to the source sphere.")
         ),
         nav_panel(
             title = "Home",

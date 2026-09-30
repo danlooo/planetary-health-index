@@ -67,15 +67,21 @@ server <- function(input, output, session) {
             updateSelectInput(
                 session,
                 "selected_feature",
-                choices = c("fwd_CCA1", "rev_CCA1", "fwd_CCA2", "rev_CCA2") |> append(input$used_features),
-                selected = "fwd_CCA1"
+                choices = c(
+                    set_names(cca_display(), cca_display()),
+                    set_names(input$used_features, input$used_features)
+                ),
+                selected = cca_display()[[1]]
             )
 
             updateSelectInput(
                 session,
                 "selected_feature_for_timeseries",
-                choices = c("fwd_CCA1", "rev_CCA1", "fwd_CCA2", "rev_CCA2") |> append(input$used_features),
-                selected = "fwd_CCA1"
+                choices = c(
+                    set_names(cca_display(), cca_display()),
+                    set_names(input$used_features, input$used_features)
+                ),
+                selected = cca_display()[[1]]
             )
         }
     )
@@ -122,6 +128,22 @@ server <- function(input, output, session) {
         bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$detrend_methods, input$scaling_grouping)
     cca_rev <- reactive(calculate_cca(processed_cube(), y_features(), x_features())) |>
         bindCache(input$x_sphere, input$y_sphere, input$used_features, input$detrended_features, input$detrend_methods, input$scaling_grouping)
+
+    # internal variable names of the CCA score/labeling columns; used only for
+    # data handling, never shown to the user
+    cca_var_ids <- c("fwd_CCA1", "fwd_CCA2", "rev_CCA1", "rev_CCA2")
+
+    # display labels built from the sphere names (fwd is x-y, rev is y-x)
+    cca_display <- reactive({
+        c(
+            paste0(input$x_sphere, "-", input$y_sphere, " CCA1"),
+            paste0(input$x_sphere, "-", input$y_sphere, " CCA2"),
+            paste0(input$y_sphere, "-", input$x_sphere, " CCA1"),
+            paste0(input$y_sphere, "-", input$x_sphere, " CCA2")
+        )
+    })
+
+    cca_lookup <- reactive(set_names(cca_var_ids, cca_display()))
 
     output$features_table <- renderTable({
         features |>
@@ -391,7 +413,7 @@ server <- function(input, output, session) {
                 ) |>
                 filter(time == cur_time) |>
                 pivot_longer(cols = -c(geo, time), names_to = "feature", values_to = "value") |>
-                filter(feature == input$selected_feature)
+                filter(feature == cca_lookup()[[input$selected_feature]])
         }
 
         max_val <-
@@ -446,8 +468,8 @@ server <- function(input, output, session) {
             pivot_longer(cols = -c(geo, time), names_to = "var_id", values_to = "value")
 
         cca_features <- tibble(
-            var_id = c("fwd_CCA1", "fwd_CCA2", "rev_CCA1", "rev_CCA2"),
-            label = c("fwd_CCA1", "fwd_CCA2", "rev_CCA1", "rev_CCA2")
+            var_id = cca_var_ids,
+            label = cca_display()
         )
 
         cur_data <-
@@ -518,10 +540,10 @@ server <- function(input, output, session) {
             loadings_cca2_file <- file.path(tmp_dir, "loadings_cca2.png")
             ggsave(loadings_cca2_file, plot = loadings_cca2_plt(), width = 18)
 
-            trajectories_fwd_file <- file.path(tmp_dir, "trajectories_fwd.png")
+            trajectories_fwd_file <- file.path(tmp_dir, paste0("trajectories_", input$x_sphere, "-", input$y_sphere, ".png"))
             ggsave(trajectories_fwd_file, plot = trajectories_fwd_plt())
 
-            trajectories_rev_file <- file.path(tmp_dir, "trajectories_rev.png")
+            trajectories_rev_file <- file.path(tmp_dir, paste0("trajectories_", input$y_sphere, "-", input$x_sphere, ".png"))
             ggsave(trajectories_rev_file, plot = trajectories_rev_plt())
 
             utils::zip(
