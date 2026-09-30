@@ -30,7 +30,77 @@ ui <- function(request) {
       .btn {
         max-width: 500px
       }
-    "))
+      #download-spinner-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 1em;
+        background: rgba(255, 255, 255, 0.75);
+      }
+      #download-spinner-overlay.show {
+        display: flex;
+      }
+      #download-spinner-overlay .spinner {
+        width: 80px;
+        height: 80px;
+        border: 8px solid rgba(0, 108, 102, 0.25);
+        border-top-color: #006c66;
+        border-radius: 50%;
+        animation: download-spin 0.9s linear infinite;
+      }
+      #download-spinner-overlay .spinner-label {
+        font-size: 1.1em;
+        color: #006c66;
+      }
+      @keyframes download-spin {
+        to { transform: rotate(360deg); }
+      }
+    ")),
+        tags$script(HTML("
+      var downloadInProgress = false;
+      $(document).on('click', '#download_plots', function(ev) {
+        if (downloadInProgress) {
+          ev.preventDefault();
+          return false;
+        }
+        downloadInProgress = true;
+        ev.preventDefault(); // take over the download to detect when the zip is ready
+        $('#download-spinner-overlay').addClass('show');
+
+        fetch(this.href)
+          .then(function(res) {
+            if (!res.ok) {
+              throw new Error('Download failed: server returned ' + res.status);
+            }
+            return res.blob();
+          })
+          .then(function(blob) {
+            // zip is ready on the server: register the wheel and start the browser download
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'planetary-health-index.zip';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function() { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+          })
+          .catch(function(err) {
+            console.error(err);
+          })
+          .finally(function() {
+            downloadInProgress = false;
+            $('#download-spinner-overlay').removeClass('show');
+          });
+
+        return false;
+      });
+    ")),
         ),
         sidebar = sidebar(
             radioButtons(
@@ -181,7 +251,12 @@ ui <- function(request) {
             p("Save inputs by updating the state in the URL:"),
             bookmarkButton(),
             p("Download inputs and most important plots. May take a minute to process results."),
-            downloadButton("download_plots", "Download")
+            downloadButton("download_plots", "Download"),
+            div(
+                id = "download-spinner-overlay",
+                div(class = "spinner"),
+                div(class = "spinner-label", "Preparing download...")
+            )
         ),
         nav_item(
             tags$a(
