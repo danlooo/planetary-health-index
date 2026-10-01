@@ -11,12 +11,50 @@ selected_codes <- c(
 
 # prc_hicp_midx is too big for 16G memory
 
-sphere_colors <- c("atmo" = "#87CEEB", "bio" = "#228B22", "socio" = "#808080")
+sphere_colors <- c("atmo" = "#4472c4", "bio" = "#00b050", "socio" = "#e7872a")
 primary_color <- "#006c66"
 secondary_color <- "#006c66"
 light_gray_color <- "#a4a4a4"
 dark_gray_color <- "#464646"
 spheres <- names(sphere_colors)
+
+# sphere color for each feature, used to color feature labels in dropdowns
+feature_colors <- function() {
+  features |>
+    select(label, sphere) |>
+    distinct() |>
+    mutate(color = unname(sphere_colors[sphere]))
+}
+
+# JS object literal mapping feature labels to sphere colors
+feature_color_js_map <- function() {
+  entries <- feature_colors() |>
+    transmute(entry = sprintf('"%s":"%s"', label, color)) |>
+    pull(entry)
+
+  paste0("{", paste(entries, collapse = ", "), "}")
+}
+
+# selectize render that colors feature labels by sphere, keeping the dropdown transparent
+feature_color_render <- function() {
+  map <- feature_color_js_map()
+  template <- c(
+    "{",
+    "  option: function(item, escape) {",
+    "    var clr = %s[item.value];",
+    "    var html = clr ? '<div style=\"color:' + clr + '\">' : '<div>';",
+    "    return html + escape(item.label) + '</div>';",
+    "  },",
+    "  item: function(item, escape) {",
+    "    var clr = %s[item.value];",
+    "    var html = clr ? '<div style=\"color:' + clr + '\">' : '<div>';",
+    "    return html + escape(item.label) + '</div>';",
+    "  }",
+    "}"
+  )
+
+  I(sprintf(paste0(template, collapse = "\n"), map, map))
+}
 
 theme_set(new = theme_classic())
 options(ggplot2.discrete.colour = partial(scale_color_hue, l = 40))

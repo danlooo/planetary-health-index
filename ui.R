@@ -63,7 +63,7 @@ ui <- function(request) {
         to { transform: rotate(360deg); }
       }
     ")),
-        tags$script(HTML("
+            tags$script(HTML("
       var downloadInProgress = false;
       $(document).on('click', '#download_plots', function(ev) {
         if (downloadInProgress) {
@@ -143,15 +143,17 @@ ui <- function(request) {
             h3("Used features"),
             p("Click on a feature item and press the delete key to remove it from the analysis. Click and start typing to add new features."),
             fluidRow(
-                column(6, selectInput(
+                column(6, selectizeInput(
                     "used_features", "Use features",
                     choices = features$label, selected = all_preselected_features, multiple = TRUE,
-                    width = "100%"
+                    width = "100%",
+                    options = list(render = feature_color_render())
                 )),
-                column(6, selectInput(
+                column(6, selectizeInput(
                     "detrended_features", "Detrend features",
                     choices = features$label, selected = all_preselected_features, multiple = TRUE,
-                    width = "100%"
+                    width = "100%",
+                    options = list(render = feature_color_render())
                 ))
             ),
             h3("Available features"),
@@ -193,7 +195,7 @@ ui <- function(request) {
             title = "Spatial",
             h3("Spatial distribution"),
             fluidRow(
-                selectInput("selected_feature", "Feature:", choices = features$label),
+                selectizeInput("selected_feature", "Feature:", choices = features$label, options = list(render = feature_color_render())),
                 sliderInput("selected_year", "Year:", min = 2001, max = 2021, value = 2021, sep = ""),
                 selectInput("selected_quarter", "Quarter:", choices = c("Q1", "Q2", "Q3", "Q4"))
             ),
@@ -209,7 +211,11 @@ ui <- function(request) {
                 ),
                 column(
                     3,
-                    selectInput("selected_feature_for_timeseries", "Features:", choices = features$label, multiple = TRUE)
+                    selectizeInput(
+                        "selected_feature_for_timeseries", "Features:",
+                        choices = features$label, multiple = TRUE,
+                        options = list(render = feature_color_render())
+                    )
                 ),
                 column(
                     3,
