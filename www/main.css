@@ -2,6 +2,7 @@
   --atmo: #4472c4;
   --bio: #00b050;
   --socio: #e7872a;
+  --sphere: #a4a4a4;
 }
 
 html {
@@ -33,34 +34,34 @@ h3 {
 .selectize-control.multi .selectize-input>.item {
   --sphere: #a4a4a4;
   border: 2px solid var(--sphere) !important;
-  background-color: rgba(164, 164, 164, 0.2);
+  background-color: rgba(164, 164, 164, 0.15);
 }
 
 .selectize-control .option.atmo {
-  background-color: rgba(68, 114, 196, 0.2);
+  background-color: rgba(68, 114, 196, 0.15);
 }
 
 .selectize-control .option.bio {
-  background-color: rgba(0, 176, 80, 0.2);
+  background-color: rgba(0, 176, 80, 0.15);
 }
 
 .selectize-control .option.socio {
-  background-color: rgba(231, 135, 42, 0.2);
+  background-color: rgba(231, 135, 42, 0.15);
 }
 
-.selectize-control.multi .selectize-input>.item.atmo {
+.selectize-control .selectize-input>.item.atmo {
   --sphere: var(--atmo);
-  background-color: rgba(68, 114, 196, 0.2);
+  background-color: rgba(68, 114, 196, 0.15);
 }
 
-.selectize-control.multi .selectize-input>.item.bio {
+.selectize-control .selectize-input>.item.bio {
   --sphere: var(--bio);
-  background-color: rgba(0, 176, 80, 0.2);
+  background-color: rgba(0, 176, 80, 0.15);
 }
 
-.selectize-control.multi .selectize-input>.item.socio {
+.selectize-control .selectize-input>.item.socio {
   --sphere: var(--socio);
-  background-color: rgba(231, 135, 42, 0.2);
+  background-color: rgba(231, 135, 42, 0.15);
 }
 
 .selectize-dropdown-content>.option.active {
@@ -79,8 +80,12 @@ h3 {
   border: 2px solid var(--socio);
 }
 
-.selectize-dropdown-content>.option.active {
-  border: 2px solid #000000;
+.selectize-dropdown-content>.option:not(.bio):not(.atmo):not(.socio) {
+  background-color: #ededed !important;
+}
+
+.selectize-dropdown-content>.option.active:not(.bio):not(.atmo):not(.socio) {
+  border: 2px solid #bbbbbb !important;
 }
 
 /* Sphere column in the available-features table, full opacity */
