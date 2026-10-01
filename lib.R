@@ -18,37 +18,34 @@ light_gray_color <- "#a4a4a4"
 dark_gray_color <- "#464646"
 spheres <- names(sphere_colors)
 
-# sphere color for each feature, used to color feature labels in dropdowns
-feature_colors <- function() {
+# sphere of each feature, used to add a sphere class to feature labels in dropdowns
+feature_spheres <- function() {
   features |>
     select(label, sphere) |>
-    distinct() |>
-    mutate(color = unname(sphere_colors[sphere]))
+    distinct()
 }
 
-# JS object literal mapping feature labels to sphere colors
-feature_color_js_map <- function() {
-  entries <- feature_colors() |>
-    transmute(entry = sprintf('"%s":"%s"', label, color)) |>
+# JS object literal mapping feature labels to their sphere
+feature_sphere_js_map <- function() {
+  entries <- feature_spheres() |>
+    transmute(entry = sprintf('"%s":"%s"', label, sphere)) |>
     pull(entry)
 
   paste0("{", paste(entries, collapse = ", "), "}")
 }
 
-# selectize render that colors feature labels by sphere, keeping the dropdown transparent
+# selectize render that adds an atmo/bio/socio class to each feature label
 feature_color_render <- function() {
-  map <- feature_color_js_map()
+  map <- feature_sphere_js_map()
   template <- c(
     "{",
     "  option: function(item, escape) {",
-    "    var clr = %s[item.value];",
-    "    var html = clr ? '<div style=\"color:' + clr + '\">' : '<div>';",
-    "    return html + escape(item.label) + '</div>';",
+    "    var sphere = %s[item.value] || '';",
+    "    return '<div class=\"option ' + sphere + '\">' + escape(item.label) + '</div>';",
     "  },",
     "  item: function(item, escape) {",
-    "    var clr = %s[item.value];",
-    "    var html = clr ? '<div style=\"color:' + clr + '\">' : '<div>';",
-    "    return html + escape(item.label) + '</div>';",
+    "    var sphere = %s[item.value] || '';",
+    "    return '<div class=\"item ' + sphere + '\">' + escape(item.label) + '</div>';",
     "  }",
     "}"
   )

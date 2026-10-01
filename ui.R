@@ -10,59 +10,7 @@ ui <- function(request) {
             bg = "white"
         ),
         tags$head(
-            tags$style(HTML("
-      .selectize-control.multi .selectize-input > .item {
-        border: 2px solid darkgrey !important;
-      }
-      html {
-        margin: 0 auto;
-      }
-      h3 {
-        color: #006c66
-      }
-      .tab-content.html-fill-container, .navbar-header {
-        padding-left: 0.5em;
-        padding-right: 0.5em;
-      }
-      .shiny-plot-output {
-        margin-bottom: 2px !important;
-      }
-      .btn {
-        max-width: 500px
-      }
-      #download-spinner-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 2000;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        gap: 1em;
-        background: rgba(255, 255, 255, 0.75);
-      }
-      #download-spinner-overlay.show {
-        display: flex;
-      }
-      #download-spinner-overlay .spinner {
-        width: 80px;
-        height: 80px;
-        border: 8px solid rgba(0, 108, 102, 0.25);
-        border-top-color: #006c66;
-        border-radius: 50%;
-        animation: download-spin 0.9s linear infinite;
-      }
-      #download-spinner-overlay .spinner-label {
-        font-size: 1.1em;
-        color: #006c66;
-      }
-      @keyframes download-spin {
-        to { transform: rotate(360deg); }
-      }
-    ")),
+            tags$link(rel = "stylesheet", type = "text/css", href = "main.css"),
             tags$script(HTML("
       var downloadInProgress = false;
       $(document).on('click', '#download_plots', function(ev) {
