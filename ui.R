@@ -81,14 +81,7 @@ ui <- function(request) {
         ),
         nav_panel(
             title = "Home",
-            div(paste0(
-                "The Planet Health Index φ is a concept to explain linear relationships of a set of features or spheres using another one, ",
-                "e.g., to model socioeconomic features using biological measurements. Hereby, Canonical Correlation Analysis is used ",
-                "to model a set of related features holistically, whereas traditional Pearson Correlation focuses on the relationship ",
-                "between two individual features. Data was collected from Eurostat, ERA5, and FluxCom."
-            )),
-            a("This project is available on GitHub.", href = "https://github.com/danlooo/planetary-health-index"),
-            div("This project has received funding from the Open-Earth-Monitor Cyberinfrastructure project that is part of the European Union's Horizon Europe research and innovation program under grant 101059548. This project is also a collaboration with the European Central Bank.")
+            includeHTML("www/home.html")
         ),
         nav_panel(
             title = "Features",
