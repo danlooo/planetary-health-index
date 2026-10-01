@@ -53,6 +53,11 @@ feature_color_render <- function() {
   I(sprintf(paste0(template, collapse = "\n"), map, map))
 }
 
+# full-opacity HTML span used to color a sphere value in the features table
+sphere_html <- function(sphere) {
+  sprintf('<span class="sphere %s">%s</span>', sphere, sphere)
+}
+
 theme_set(new = theme_classic())
 options(ggplot2.discrete.colour = partial(scale_color_hue, l = 40))
 

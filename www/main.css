@@ -1,3 +1,9 @@
+:root {
+  --atmo: #4472c4;
+  --bio: #00b050;
+  --socio: #e7872a;
+}
+
 html {
   margin: 0 auto;
 }
@@ -20,28 +26,87 @@ h3 {
   max-width: 500px;
 }
 
-.selectize-control.multi .selectize-input>.item {
-  border: 2px solid darkgrey !important;
-}
 
 /* Color coding for feature labels */
 
-.selectize-control .option.atmo,
-.selectize-control.multi .selectize-input>.item.atmo {
+/* Feature labels colored by sphere. Labels without a sphere fall back to grey. */
+.selectize-control.multi .selectize-input>.item {
+  --sphere: #a4a4a4;
+  border: 2px solid var(--sphere) !important;
+  background-color: rgba(164, 164, 164, 0.2);
+}
+
+.selectize-control .option.atmo {
   background-color: rgba(68, 114, 196, 0.2);
-  border-color: #4472c4 !important;
 }
 
-.selectize-control .option.bio,
-.selectize-control.multi .selectize-input>.item.bio {
+.selectize-control .option.bio {
   background-color: rgba(0, 176, 80, 0.2);
-  border-color: #00b050 !important;
 }
 
-.selectize-control .option.socio,
-.selectize-control.multi .selectize-input>.item.socio {
+.selectize-control .option.socio {
   background-color: rgba(231, 135, 42, 0.2);
-  border-color: #e7872a !important;
+}
+
+.selectize-control.multi .selectize-input>.item.atmo {
+  --sphere: var(--atmo);
+  background-color: rgba(68, 114, 196, 0.2);
+}
+
+.selectize-control.multi .selectize-input>.item.bio {
+  --sphere: var(--bio);
+  background-color: rgba(0, 176, 80, 0.2);
+}
+
+.selectize-control.multi .selectize-input>.item.socio {
+  --sphere: var(--socio);
+  background-color: rgba(231, 135, 42, 0.2);
+}
+
+.selectize-dropdown-content>.option.active {
+  color: #000000;
+}
+
+.selectize-dropdown-content>.option.active.atmo {
+  border: 2px solid var(--atmo);
+}
+
+.selectize-dropdown-content>.option.active.bio {
+  border: 2px solid var(--bio);
+}
+
+.selectize-dropdown-content>.option.active.socio {
+  border: 2px solid var(--socio);
+}
+
+.selectize-dropdown-content>.option.active {
+  border: 2px solid #000000;
+}
+
+/* Sphere column in the available-features table, full opacity */
+table .sphere.atmo {
+  color: var(--atmo);
+}
+
+table .sphere.bio {
+  color: var(--bio);
+}
+
+table .sphere.socio {
+  color: var(--socio);
+}
+
+/* Sphere radio button labels in the sidebar, full opacity */
+.shiny-input-radiogroup label span.atmo {
+  color: var(--atmo);
+}
+
+.shiny-input-radiogroup label span.bio {
+  color: var(--bio);
+}
+
+.shiny-input-radiogroup label span.socio {
+  color: var(--socio);
 }
 
 #download-spinner-overlay {

@@ -21,8 +21,8 @@ WORKDIR /srv/shiny-server
 COPY *.R ./
 COPY data data/
 COPY _targets _targets/
-COPY www www/
 RUN mkdir out
 RUN R -e "targets::tar_make()"
+COPY www www/
 EXPOSE 80
 CMD R -e "shiny::runApp('/srv/shiny-server', host='0.0.0.0', port=80)"

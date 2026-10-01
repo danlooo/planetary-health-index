@@ -149,8 +149,9 @@ server <- function(input, output, session) {
         features |>
             filter(!var_id %in% hidden_features) |>
             select(sphere, label, source, temporal_resolution, spatial_resolution, description) |>
-            arrange(sphere, label)
-    }) |> bindCache(1)
+            arrange(sphere, label) |>
+            mutate(sphere = sphere_html(sphere))
+    }, sanitize.text.function = function(x) x) |> bindCache(1)
 
     scores_plt <- reactive({
         data <-

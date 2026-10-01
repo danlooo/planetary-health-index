@@ -53,11 +53,15 @@ ui <- function(request) {
         sidebar = sidebar(
             radioButtons(
                 "x_sphere", "Source sphere",
-                choices = spheres, selected = "bio"
+                choiceNames = lapply(spheres, function(s) tags$span(s, class = s)),
+                choiceValues = spheres,
+                selected = "bio"
             ),
             radioButtons(
                 "y_sphere", "Target sphere",
-                choices = spheres, selected = "socio"
+                choiceNames = lapply(spheres, function(s) tags$span(s, class = s)),
+                choiceValues = spheres,
+                selected = "socio"
             ),
             checkboxGroupInput(
                 "detrend_methods", "Detrend methods",
