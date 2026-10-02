@@ -42,7 +42,8 @@ theme_set(
         axis.title.y = element_text(margin = margin(r = 4)),
         axis.text.x = element_text(margin = margin(t = 2)),
         axis.text.y = element_text(margin = margin(r = 2)),
-        axis.ticks.length = unit(2, "pt")
+        axis.ticks.length = unit(2, "pt"),
+        strip.background = element_blank()
     )
 )
 quarters <- seq(

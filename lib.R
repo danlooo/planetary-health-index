@@ -58,7 +58,7 @@ sphere_html <- function(sphere) {
   sprintf('<span class="sphere %s">%s</span>', sphere, sphere)
 }
 
-theme_set(new = theme_classic())
+theme_set(new = theme_classic() + theme(strip.background = element_blank()))
 options(ggplot2.discrete.colour = partial(scale_color_hue, l = 40))
 
 write_nc_tibble <- function(data, nc_path) {
@@ -302,21 +302,26 @@ calculate_cca <- function(cube, x_features, y_features) {
 plot_loadings <- function(data, value_column, value_label) {
   data |>
     left_join(features) |>
-    select(value = all_of(value_column), label, direction) |>
+    select(value = all_of(value_column), label, direction, sphere) |>
     mutate(
-      sign = map_chr(value, ~ ifelse(sign(.x) == 1, "positive", "negative")),
+      sign = map_chr(value, ~ ifelse(sign(.x) > 0, "positive", "negative")),
       value = abs(value)
     ) |>
     group_by(direction) |>
     arrange(-value) |>
     slice(1:10) |>
     mutate(label = fct_reorder(label, value)) |>
-    ggplot(aes(label, value, fill = sign)) +
+    ggplot(aes(label, value, fill = sphere, alpha = sign)) +
     geom_bar(stat = "identity") +
     geom_hline(yintercept = 0) +
     facet_grid(direction ~ ., scales = "free_y", space = "free_y") +
     coord_flip() +
-    scale_fill_manual(values = c("positive" = "black", "negative" = "darkgrey")) +
+    scale_fill_manual(values = sphere_colors) +
+    scale_alpha_manual(
+      values = c("positive" = 1, "negative" = 0.5),
+      labels = c("positive" = "positive", "negative" = "negative"),
+      name = "Correlation sign"
+    ) +
     scale_y_continuous(expand = c(0, 0)) +
     labs(x = "Feature", y = value_label)
 }
