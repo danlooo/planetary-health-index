@@ -152,3 +152,14 @@ table .sphere.socio {
     transform: rotate(360deg);
   }
 }
+
+/* Partner logos: uniform height on one horizontal line */
+.partner-row {
+  gap: 2rem;
+}
+
+.partner-logo {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+}
