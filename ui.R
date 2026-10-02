@@ -86,7 +86,7 @@ ui <- function(request) {
         nav_panel(
             title = "Features",
             h3("Used features"),
-            p("Click on a feature item and press the delete key to remove it from the analysis. Click and start typing to add new features."),
+            p("Click and start typing to add new features to be used in the analysis. Those features will be detrended by default. Click on a feature item and press the delete key to remove it."),
             fluidRow(
                 column(6, selectizeInput(
                     "used_features", "Use features",
