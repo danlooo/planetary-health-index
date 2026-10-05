@@ -62,7 +62,8 @@ while read -r file_id; do
     api -X DELETE "${BASE_URL}/api/deposit/depositions/${DEPOSITION_ID}/files/${file_id}" >/dev/null
 done < <(api "${BASE_URL}/api/deposit/depositions/${DEPOSITION_ID}/files" | jq -r '.[].id')
 
-api -X PUT -H "Content-Type: application/gzip" --upload-file "${ARCHIVE}" "${BUCKET}/${ARCHIVE}" >/dev/null
+# The bucket accepts only application/octet-stream; any other type returns HTTP 415.
+api -X PUT -H "Content-Type: application/octet-stream" --upload-file "${ARCHIVE}" "${BUCKET}/${ARCHIVE}" >/dev/null
 
 echo "==> Setting metadata from ${METADATA_FILE}"
 METADATA=$(jq --arg version "${VERSION}" --arg date "$(date -u +%F)" \
