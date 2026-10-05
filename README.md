@@ -1,5 +1,7 @@
 # Planet Health Index
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23158304.svg)](https://doi.org/10.5281/zenodo.23158304)
+
 Planet Health Index (PHI) describes the state of a region at a given time using three sets of features: biosphere, atmosphere, and sociosphere.
 Canonical Correlation Analysis (CCA) is used to describe the relationship between a given pair of those feature sets.
 
