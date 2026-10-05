@@ -1,0 +1,25 @@
+name: Publish release to Zenodo
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  zenodo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the released tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Archive the release on Zenodo
+        env:
+          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_ACCESS_TOKEN }}
+          ZENODO_CONCEPT_RECID: ${{ vars.ZENODO_CONCEPT_RECID }}
+          ZENODO_BASE_URL: ${{ vars.ZENODO_BASE_URL }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: bash .github/scripts/publish-zenodo-release.sh

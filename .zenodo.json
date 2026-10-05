@@ -1,0 +1,28 @@
+{
+  "title": "Planetary Health Index",
+  "upload_type": "software",
+  "access_right": "open",
+  "description": "Planetary Health Index (PHI) describes the state of a region at a given time using three feature sets: biosphere, atmosphere, and sociosphere. Canonical Correlation Analysis (CCA) describes the relationship between a pair of feature sets. This deposit contains the source code of the PHI dashboard.",
+  "creators": [
+    {
+      "name": "Loos, Daniel",
+      "affiliation": "Max Planck Institute for Biogeochemistry"
+    }
+  ],
+  "keywords": [
+    "planetary health",
+    "canonical correlation analysis",
+    "Earth observation",
+    "remote sensing",
+    "Eurostat",
+    "NUTS3",
+    "Shiny"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/danlooo/planetary-health-index",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ]
+}
