@@ -23,6 +23,25 @@ This app is a Docker container with an R targets workflow that is triggered on `
 Targets were used in the dashboard written in R shiny.
 The container provides the environment for targets, shiny, and VSCode devconatiner.
 
+## Releases
+
+Every published GitHub release is archived on Zenodo and receives a DOI.
+The workflow in `.github/workflows/zenodo-release.yml` runs on the `published` release event.
+It packs the tagged source tree into a tarball, uploads it to Zenodo, and publishes it as a new version of the existing record.
+Deposition metadata comes from `.zenodo.json`.
+
+Set up the repository once:
+
+1. Create a Zenodo personal access token with the `deposit:write` and `deposit:actions` scopes.
+2. Add it as the repository secret `ZENODO_ACCESS_TOKEN`.
+3. For the first release, leave the repository variable `ZENODO_CONCEPT_RECID` empty. The workflow prints the concept record ID when it finishes.
+4. Store that ID in the repository variable `ZENODO_CONCEPT_RECID`. Later releases then become new versions of the same record.
+
+To test against the Zenodo sandbox, set the repository variable `ZENODO_BASE_URL` to `https://sandbox.zenodo.org` and use a sandbox token.
+
+Git LFS files stay pointer files in the archive.
+The deposit therefore contains the source code and the tracked metadata, not the large data files.
+
 ## Funding
 
 <p>
